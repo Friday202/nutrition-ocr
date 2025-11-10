@@ -1,5 +1,5 @@
 # Where the raw data is stored, data for sorie other for mine
-DATA_DIR = "data_ocr"
+DATA_DIR = "../data_ocr"
 
 # Where the processed dataset and processor are saved
 PROCESSED_DATASET_DIR = "processed_dataset_ocr"

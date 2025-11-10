@@ -181,6 +181,6 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 
-/local_model_ocr
-/processed_dataset_ocr
-/processor_ocr
+donut_ocr/local_model_ocr
+donut_ocr/processed_dataset_ocr
+donut_ocr/processor_ocr
