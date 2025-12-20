@@ -39,15 +39,17 @@ def train():
 
     training_args = Seq2SeqTrainingArguments(
         output_dir=config.OUTPUT_DIR,
-        num_train_epochs=300,
+        num_train_epochs=10,  # TOTAL VALUE
         learning_rate=2e-5,
         per_device_train_batch_size=2,
         weight_decay=0.01,
         fp16=True,
         logging_steps=50,
-        save_total_limit=2,
+        save_total_limit=3,
         evaluation_strategy="no",
-        save_strategy="epoch",
+        save_strategy="steps",
+        save_steps=1000,
+        overwrite_output_dir=False,
         predict_with_generate=True#,
         #load_best_model_at_end=True,
     )
@@ -61,7 +63,7 @@ def train():
         # callbacks=[EarlyStoppingCallback(early_stopping_patience=2)],
     )
 
-    trainer.train()
+    trainer.train(resume_from_checkpoint=True)  # next day: resume_from_checkpoint=True
 
     # Save
     local_dir = Path(config.MODEL_DIR)

@@ -4,6 +4,7 @@ from transformers import DonutProcessor
 from datasets import load_dataset
 import torch
 import json
+import pandas as pd
 
 import config
 
@@ -38,6 +39,48 @@ def get_processed_dataset(test=False):
 def get_processor():
     processor = DonutProcessor.from_pretrained(config.PROCESSOR_DIR)
     return processor
+
+
+def create_json_meta_data_file_xslx(overwrite=False):
+    metadata_path = Path(config.DATA_DIR).joinpath("key")
+    image_path = Path(config.DATA_DIR).joinpath("img")
+
+    # First check if metadata.jsonl already exists
+    metadata_file = image_path.joinpath('metadata.jsonl')
+    if metadata_file.exists():
+        print(f"[INFO] '{metadata_file}' already exists.")
+        if not overwrite:
+            print("[INFO] Skipping creation (set overwrite=True to replace).")
+            return
+        else:
+            print("[INFO] Overwriting existing file...")
+
+    metadata_list = []
+    df = pd.read_excel(metadata_path / "__IzvozIngredients.xlsx")
+    print(df.columns.tolist())
+
+    for _, row in df.iterrows():
+        file_stem = str(row["FileName"]).strip()
+        file_stem = Path(file_stem).stem  # ensures no .jpg duplication
+        text = str(row["Ingredients"]).strip()
+
+        image_file = image_path / f"{file_stem}.jpg"
+
+        if image_file.is_file():
+            metadata_list.append({
+                "text": json.dumps({"text_sequence": text}, ensure_ascii=False),
+                "file_name": f"{file_stem}.jpg"
+            })
+        else:
+            print(f"[WARNING] Image file '{image_file}' does not exist. Skipping.")
+
+    with open(metadata_file, 'w', encoding='utf-8') as outfile:
+        for entry in metadata_list:
+            json.dump(entry, outfile, ensure_ascii=False)
+            outfile.write('\n')
+
+    print("[INFO] metadata.jsonl created successfully.")
+    exit(0)
 
 
 def create_json_meta_data_file(overwrite=False):
@@ -131,6 +174,19 @@ def preprocess_documents_for_donut(sample, new_special_tokens, task_start_token,
     return {"image": image, "text": d_doc}
 
 
+def preprocess_documents_for_donut_batch(batch, new_special_tokens, task_start_token, eos_token):
+    images, texts, outputs = [], [], []
+
+    for img, txt in zip(batch["image"], batch["text"]):
+        text_obj = json.loads(txt)
+        d_doc = task_start_token + json2token(text_obj, new_special_tokens) + eos_token
+        image = img.convert("RGB")
+        images.append(image)
+        texts.append(d_doc)
+
+    return {"image": images, "text": texts}
+
+
 def json2token(obj, new_special_tokens, update_special_tokens_for_json_key=True, sort_json_key=True):
     """
     Convert a JSON-like object (dict/list/primitive) into a token sequence string.
@@ -199,7 +255,7 @@ def transform_and_tokenize(sample, processor, split="train", max_length=512, ign
 
 
 def preprocess():
-    create_json_meta_data_file()
+    create_json_meta_data_file_xslx(False)
     image_path = Path(config.DATA_DIR).joinpath("img")
 
     # Load dataset
@@ -210,8 +266,23 @@ def preprocess():
     task_start_token = "<s>"  # start of task token
     eos_token = "</s>"  # eos token of tokenizer
 
-    proc_dataset = dataset.map (
-        lambda sample: preprocess_documents_for_donut(sample, new_special_tokens, task_start_token, eos_token)
+    # proc_dataset = dataset.map (
+    #     lambda sample: preprocess_documents_for_donut(sample, new_special_tokens, task_start_token, eos_token)
+    # )
+
+    # proc_dataset = dataset.map(
+    #     lambda sample: preprocess_documents_for_donut(sample, new_special_tokens, task_start_token, eos_token),
+    #     batched=False,
+    #     batch_size=1
+    # )
+
+    # Load processor
+    processor = DonutProcessor.from_pretrained("naver-clova-ix/donut-base")
+
+    proc_dataset = dataset.map(
+       lambda batch: preprocess_documents_for_donut_batch(batch, new_special_tokens, task_start_token, eos_token),
+       batched=True,
+       batch_size=1,
     )
 
     # Load processor

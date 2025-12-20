@@ -38,17 +38,20 @@ def run_prediction(sample, model, processor, device):
 def evaluate():
     processed_dataset = preprocess.get_processed_dataset()
     processor = DonutProcessor.from_pretrained(config.PROCESSOR_DIR)
-    model = VisionEncoderDecoderModel.from_pretrained(config.MODEL_DIR)
+    model = VisionEncoderDecoderModel.from_pretrained(config.OUTPUT_DIR + "/checkpoint-10000")  # config.MODEL_DIR
 
     assert len(processor.tokenizer) == model.config.decoder.vocab_size
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model.to(device)
 
-    test_sample = processed_dataset["train"][random.randint(0, len(processed_dataset["train"]) - 1)]
-    prediction, target = run_prediction(test_sample, model, processor, device)
-    print(f"Reference:\n {target}")
-    print(f"Prediction:\n {prediction}")
+    for i in range(20):
+        test_sample = processed_dataset["test"][random.randint(0, len(processed_dataset["test"]) - 1)]
+        prediction, target = run_prediction(test_sample, model, processor, device)
+        print(f"Reference:\n {target}")
+        print(f"Prediction:\n {prediction}")
+
+    quit()
 
     x = ["train", "test", "validation"]
     for xx in x:

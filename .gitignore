@@ -182,5 +182,10 @@ cython_debug/
 .cursorindexingignore
 
 donut_ocr/local_model_ocr
+donut_ocr/outputs
 donut_ocr/processed_dataset_ocr
 donut_ocr/processor_ocr
+donut_ocr/processed_dataset_ocr_ingredients
+donut_ocr/processor_ocr_ingredients
+tesseract_ocr/debug
+results
