@@ -28,7 +28,7 @@ if __name__ == "__main__":
                 jsonl_ocr_results_paths.append(jsonl_file)
 
     # Now get ground truth data
-    gt_data = helpers.get_demo_data("data_ocr/img/")
+    gt_data = helpers.get_demo_data()
     gt_dict = {Path(img_path).stem: label for img_path, label in gt_data}
     print(f"Found {len(gt_dict)} ground truth samples for evaluation.")
 

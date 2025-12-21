@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 
-def create_folder(name, flush=False, parent_path="../results/"):
+def create_folder(name, flush=False, parent_path="results/"):
     # Combine parent path with the folder name to get the full folder path
     folder_path = os.path.join(parent_path, name)
 
@@ -81,7 +81,7 @@ def load_jsonl(jsonl_path):
 
 
 def get_demo_data_path():
-    return "../data_ocr/img/"
+    return "data_ocr/img/"
 
 
 def get_demo_data(path=None):
