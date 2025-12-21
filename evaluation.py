@@ -5,10 +5,21 @@ import common.helpers as helpers
 from jiwer import wer, cer
 
 
+def substring_recall(gt, pred):
+    return gt.lower() in pred.lower()
+
+
+def char_precision(gt, pred):
+    gt_set = set(gt)
+    pred_set = set(pred)
+    return len(gt_set & pred_set) / max(1, len(pred_set))
+
+
 if __name__ == "__main__":
     # Scan this directory for ocr results
     base_dir = Path("results")
     jsonl_ocr_results_paths = []
+    print_both_texts = True
 
     for item in base_dir.iterdir():
         print(f"Found OCR results in: {item.name}, this will be evaluated.")
@@ -33,5 +44,12 @@ if __name__ == "__main__":
             gt_text = gt_dict.get(file_name, "")
             # Simple evaluation: print comparison
             print(f"File: {file_name}")
-            print(f"WER: {wer(gt_text, predicted_text):.4f}, CER: {cer(gt_text, predicted_text):.4f}")
+            if print_both_texts:
+                print(f"GT: {gt_text}")
+                print(f"Predicted: {predicted_text}")
+
+            print(f"WER: {wer(gt_text, predicted_text):.4f}, "
+                  f"CER: {cer(gt_text, predicted_text):.4f},"
+                  f" Substring Recall: {substring_recall(gt_text, predicted_text)}, "
+                  f"Char Precision: {char_precision(gt_text, predicted_text):.4f}")
             print("-" * 40)
