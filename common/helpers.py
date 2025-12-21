@@ -71,13 +71,25 @@ def save_to_jsonl(output_path, flush=False):
                 jsonl_file.write(json.dumps(jsonl_row, ensure_ascii=False) + "\n")
 
 
+def load_jsonl(jsonl_path):
+    data_list = []
+    with open(jsonl_path, 'r', encoding='utf-8') as file:
+        for line in file:
+            data = json.loads(line.strip())
+            data_list.append(data)
+    return data_list
+
+
 def get_demo_data_path():
     return "../data_ocr/img/"
 
 
-def get_demo_data():
+def get_demo_data(path=None):
     # Assuming get_demo_data_path() returns the correct file path
-    data_path = get_demo_data_path() + "metadata.jsonl"
+    if path is None:
+        data_path = get_demo_data_path() + "metadata.jsonl"
+    else:
+        data_path = path + "metadata.jsonl"
 
     # Open the file and iterate through lines
     with open(data_path, 'r', encoding='utf-8') as file:

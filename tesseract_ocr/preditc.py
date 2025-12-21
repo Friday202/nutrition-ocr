@@ -112,7 +112,4 @@ def postprocess(ocr_data):
     ocr_data = ocr_data[ocr_data["conf"] > 30]  # Filter out low-confidence results
     ocr_text = " ".join(ocr_data["text"].tolist())
 
-    print(ocr_text)
-    quit()
-
     return ocr_text

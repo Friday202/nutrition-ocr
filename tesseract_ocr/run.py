@@ -14,5 +14,5 @@ if __name__ == "__main__":
         ocr_text = run_prediction(img_path, debug=True)
         helpers.save_to_json(ocr_text, img_path, output_results_dir, flush=True)
 
-    # Generate .jsonl file with OCR results for all demo data
+    # Generate .jsonl file with OCR results for all data - used in common evaluation script
     helpers.save_to_jsonl(output_results_dir, flush=True)
