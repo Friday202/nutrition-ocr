@@ -31,7 +31,7 @@ def generate_ocr_results(ocr_type):
 
 
 def get_data():
-    # Currently only demo data is supported
+    # Currently only demo data is supported, change here later for custom data loading
     return helpers.get_demo_data()
 
 
