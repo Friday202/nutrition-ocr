@@ -5,8 +5,10 @@ from datasets import load_dataset
 import torch
 import json
 import pandas as pd
-
+import os
+import numpy as np
 import config
+import common.helpers as helpers
 
 
 def get_processed_dataset(test=False):
@@ -41,54 +43,101 @@ def get_processor():
     return processor
 
 
-def create_json_meta_data_file_xslx(overwrite=False):
-    metadata_path = Path(config.DATA_DIR).joinpath("key")
-    image_path = Path(config.DATA_DIR).joinpath("img")
+def create_jsons_from_xslx(key_file_path, is_flat=False, is_slim=False):
+    df = pd.read_excel(key_file_path / "nutris.xlsx")
 
-    # First check if metadata.jsonl already exists
-    metadata_file = image_path.joinpath('metadata.jsonl')
-    if metadata_file.exists():
-        print(f"[INFO] '{metadata_file}' already exists.")
-        if not overwrite:
-            print("[INFO] Skipping creation (set overwrite=True to replace).")
-            return
-        else:
-            print("[INFO] Overwriting existing file...")
+    n_slim = 5000
+    n_rows = len(df)
 
-    metadata_list = []
-    df = pd.read_excel(metadata_path / "__IzvozIngredients.xlsx")
-    print(df.columns.tolist())
+    if n_rows <= n_slim or not is_slim:
+        pass  # use all rows
+    else:
+        indices = np.linspace(0, n_rows - 1, n_slim, dtype=int)
+        df = df.iloc[indices]
+        print(f"[INFO] Slim mode: reduced from {n_rows} to {len(df)} rows.")
 
     for _, row in df.iterrows():
-        file_stem = str(row["FileName"]).strip()
-        file_stem = Path(file_stem).stem  # ensures no .jpg duplication
-        text = str(row["Ingredients"]).strip()
+        file = str(row["FileName"]).strip()
+        text = row["Ingredients"]
 
-        image_file = image_path / f"{file_stem}.jpg"
+        json_file_name = Path(file).stem + ".json"
 
-        if image_file.is_file():
-            metadata_list.append({
-                "text": json.dumps({"text_sequence": text}, ensure_ascii=False),
-                "file_name": f"{file_stem}.jpg"
-            })
+        if is_flat:
+            # For flat model use flat string
+            if pd.isna(text) or str(text).strip().lower() == "nan" or str(text).strip() == "/":
+                ingredients = ""
+            else:
+                ingredients = str(text).strip()
         else:
-            print(f"[WARNING] Image file '{image_file}' does not exist. Skipping.")
+            # Else split into list
+            ingredients = process_ingredients(text)
 
-    with open(metadata_file, 'w', encoding='utf-8') as outfile:
-        for entry in metadata_list:
-            json.dump(entry, outfile, ensure_ascii=False)
-            outfile.write('\n')
+        # Wrap each ingredient in a dict apparently that is needed
+        ingredients_wrapped = [{"text": ing} for ing in ingredients]
 
-    print("[INFO] metadata.jsonl created successfully.")
-    exit(0)
+        json_data = {"ingredients": ingredients_wrapped}
+
+        with open(key_file_path / json_file_name, 'w', encoding='utf-8') as json_file:
+            json.dump(json_data, json_file, ensure_ascii=False, indent=4)
 
 
-def create_json_meta_data_file(overwrite=False):
-    metadata_path = Path(config.DATA_DIR).joinpath("key")
-    image_path = Path(config.DATA_DIR).joinpath("img")
+def process_ingredients(text):
+    """
+    Split text by commas but:
+    - Ignore commas inside parentheses
+    - Ignore commas that are part of numbers like 3,6%
+    - Trim whitespace for each ingredient
+    """
+    if not text or str(text).strip().lower() in {"nan", "/"}:
+        return []
+
+    ingredients = []
+    current = []
+    open_parens = 0
+
+    for i, char in enumerate(text):
+        # Track parentheses
+        if char == "(":
+            open_parens += 1
+        elif char == ")":
+            if open_parens > 0:
+                open_parens -= 1
+
+        # Check if this comma should be ignored
+        if char == ",":
+            # Don't split if inside parentheses
+            if open_parens > 0:
+                current.append(char)
+                continue
+            # Don't split if part of a number (digit before AND after comma)
+            prev_char = text[i-1] if i > 0 else ""
+            next_char = text[i+1] if i+1 < len(text) else ""
+            if prev_char.isdigit() and next_char.isdigit():
+                current.append(char)
+                continue
+            # Otherwise, it's a real separator
+            ingredient = "".join(current).strip()
+            if ingredient:
+                ingredients.append(ingredient)
+            current = []
+        else:
+            current.append(char)
+
+    # Add last ingredient
+    ingredient = "".join(current).strip()
+    if ingredient:
+        ingredients.append(ingredient)
+
+    return ingredients
+
+
+# This function should be in helpers as results als generate jsonl files
+def create_json_meta_data_file(data_name, overwrite=True):
+    image_path = helpers.get_img_folder_path(data_name)
+    key_path = helpers.get_key_folder_path(data_name)
+    metadata_file = helpers.get_metadata_jsonl_path(data_name)
 
     # First check if metadata.jsonl already exists
-    metadata_file = image_path.joinpath('metadata.jsonl')
     if metadata_file.exists():
         print(f"[INFO] '{metadata_file}' already exists.")
         if not overwrite:
@@ -97,20 +146,20 @@ def create_json_meta_data_file(overwrite=False):
         else:
             print("[INFO] Overwriting existing file...")
 
-    metadata_list = []
-    for file_name in metadata_path.glob("*.json"):
+    json_list = []
+    for file_name in key_path.glob("*.json"):
         with open(file_name, "r", encoding="utf-8") as json_file:
             # load json file
             data = json.load(json_file)
             # create "text" column with json string
-            text = json.dumps(data)
+            text = json.dumps(data, ensure_ascii=False)
             # add to metadata list if image exists
             if image_path.joinpath(f"{file_name.stem}.jpg").is_file():
-                metadata_list.append({"text": text, "file_name": f"{file_name.stem}.jpg"})
+                json_list.append({"text": text, "file_name": f"{file_name.stem}.jpg"})
 
-    with open(image_path.joinpath('metadata.jsonl'), 'w') as outfile:
-        for entry in metadata_list:
-            json.dump(entry, outfile)
+    with open(metadata_file, 'w', encoding='utf-8') as outfile:
+        for entry in json_list:
+            json.dump(entry, outfile, ensure_ascii=False)
             outfile.write('\n')
 
 """
@@ -254,8 +303,42 @@ def transform_and_tokenize(sample, processor, split="train", max_length=512, ign
     return {"pixel_values": pixel_values, "labels": labels, "target_sequence": sample["text"]}
 
 
-def preprocess():
-    create_json_meta_data_file_xslx(False)
+def generate_jsons(dataset_type, overwrite=True):
+    if "nutris" not in dataset_type and not overwrite:
+        return  # Nothing to do sroie already has jsons
+
+    is_flat = "flat" in dataset_type
+    if is_flat:
+        dataset_type = dataset_type.replace("-flat", "")
+
+    is_slim = "slim" in dataset_type
+    if "is_slim":
+        dataset_type = dataset_type.replace("-slim", "")
+
+    key_file_path = helpers.get_key_folder_path(dataset_type)
+
+    # Remove previous json files if overwrite is True
+    if overwrite:
+        for json_file in key_file_path.glob("*.json"):
+            os.remove(json_file)
+        print(f"[INFO] Removed existing JSON files in '{key_file_path}'.")
+
+    create_jsons_from_xslx(key_file_path, is_flat=is_flat, is_slim=is_slim)
+
+    return dataset_type
+
+
+def preprocess(dataset_type):
+    print(f"[INFO] Preprocessing dataset type: {dataset_type}")
+
+    # Generate JSON files if needed
+    dataset_type = generate_jsons(dataset_type)
+
+    # Create metadata.jsonl file
+    create_json_meta_data_file(data_name=dataset_type)
+
+    exit(3)
+
     image_path = Path(config.DATA_DIR).joinpath("img")
 
     # Load dataset
@@ -305,4 +388,7 @@ def preprocess():
 
 
 if __name__ == "__main__":
-    preprocess()
+    # "nutris" with optional "-slim" / "-flat" or "sroie", slim is 5000 samples full is 23000 samples
+    data = "nutris-slim"
+
+    preprocess(data)
