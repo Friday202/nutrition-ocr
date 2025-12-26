@@ -91,10 +91,10 @@ def get_data_path(data_name):
 
 
 def get_data(data_name="demo"):
-    data_path = get_data_path(data_name) + "/metadata.jsonl"
+    jsonl_file = get_data_path(data_name) + "/metadata.jsonl"
 
     # Open the file and iterate through lines
-    with open(data_path, 'r', encoding='utf-8') as file:
+    with open(jsonl_file, 'r', encoding='utf-8') as file:
         for line in file:
             # Parse each line as a JSON object
             data = json.loads(line.strip())
