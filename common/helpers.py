@@ -85,13 +85,26 @@ def get_data_path(data_name):
 
     # Go up TWO levels from this file:
     # common → nutrition-ocr → FRI
-    fri_root = os.path.dirname(os.path.dirname(os.path.dirname(here)))
+    out_project_root = os.path.dirname(os.path.dirname(os.path.dirname(here)))
 
-    return os.path.join(fri_root, "data_ocr", data_name, "img")
+    return os.path.join(out_project_root, "data_ocr", data_name)
+
+
+def get_img_folder_path(data_name):
+    return Path(get_data_path(data_name)).joinpath("img")
+
+
+def get_key_folder_path(data_name):
+    return Path(get_data_path(data_name)).joinpath("key")
+
+
+def get_metadata_jsonl_path(data_name):
+    # Metadata jsonl is in img folder
+    return get_img_folder_path(data_name).joinpath("metadata.jsonl")
 
 
 def get_data(data_name="demo"):
-    jsonl_file = get_data_path(data_name) + "/metadata.jsonl"
+    jsonl_file = get_metadata_jsonl_path(data_name)
 
     # Open the file and iterate through lines
     with open(jsonl_file, 'r', encoding='utf-8') as file:
@@ -105,7 +118,7 @@ def get_data(data_name="demo"):
 
             # Extract the file_name
             file_name = data.get('file_name', "")
-            file_name = os.path.join(get_data_path(data_name), file_name)
+            file_name = os.path.join(get_img_folder_path(data_name), file_name)
 
             # Yielding pairs of file_name (img) and text_sequence (label)
             yield file_name, text_sequence
