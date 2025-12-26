@@ -131,12 +131,10 @@ if __name__ == "__main__":
 
     img = "003.jpg"
 
-    relation_to_root = "../"
-
-    for image_path, ground_truth in get_demo_data(relation_to_root + "../data_ocr/img/"):
+    for image_path, ground_truth in get_demo_data():
         if os.path.basename(image_path) != img:
             continue
 
-        text = run_prediction(relation_to_root + image_path, debug=True)
+        text = run_prediction(image_path, debug=True)
         print("Extracted Text:", text)
         print("Ground Truth:", ground_truth)
