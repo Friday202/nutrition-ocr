@@ -30,12 +30,14 @@ def generate_ocr_results(ocr_type):
 
 def get_data():
     # Currently only demo data is supported, change here later for custom data loading
-    return helpers.get_demo_data()
+    return helpers.get_data(DATASET)
 
 
 if __name__ == "__main__":
     # Set Tesseract executable path
-    tesseract.set_tesseract_path(r"C:\Program Files\Tesseract-OCR\tesseract.exe")
+    tesseract.set_tesseract_path()
+
+    DATASET = "demo"  # "custom"
 
     # Code to generate results thru an interface for all OCR methods
     run_for = ["tesseract"]  # "donut"]

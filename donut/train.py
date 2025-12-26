@@ -2,6 +2,7 @@ import torch
 
 _original_torch_load = torch.load
 
+# Monkey-patch torch.load to disable weights-only loading due to version issues
 def torch_load_unsafe(*args, **kwargs):
     kwargs["weights_only"] = False
     return _original_torch_load(*args, **kwargs)

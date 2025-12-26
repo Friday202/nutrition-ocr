@@ -13,3 +13,6 @@ or
 ```
 conda env create -f donut_env.yml
 ```
+
+
+Dataset must be present next to root folder, under name data_ocr and inside "nutris" and "demo".

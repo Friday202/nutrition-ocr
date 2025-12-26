@@ -2,7 +2,7 @@ import cv2
 import pytesseract
 import os
 
-from common.helpers import create_folder, get_demo_data
+from common.helpers import create_folder, get_data
 
 
 def preprocess(image, debug=False):
@@ -116,7 +116,7 @@ def postprocess(ocr_data):
     return ocr_text
 
 
-def set_tesseract_path(tesseract_path):
+def set_tesseract_path(tesseract_path="C:\\Program Files\\Tesseract-OCR\\tesseract.exe"):
     if not os.path.isfile(tesseract_path):
         raise ValueError(f"The provided Tesseract path is invalid: {tesseract_path}")
     else:
@@ -127,11 +127,11 @@ def set_tesseract_path(tesseract_path):
 
 if __name__ == "__main__":
     # Run this if you want on a single image for testing
-    set_tesseract_path(r"C:\Program Files\Tesseract-OCR\tesseract.exe")
+    set_tesseract_path()
 
     img = "003.jpg"
 
-    for image_path, ground_truth in get_demo_data():
+    for image_path, ground_truth in get_data("demo"):
         if os.path.basename(image_path) != img:
             continue
 

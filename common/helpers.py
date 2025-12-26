@@ -80,22 +80,18 @@ def load_jsonl(jsonl_path):
     return data_list
 
 
-def get_demo_data_path():
+def get_data_path(data_name):
     here = os.path.abspath(__file__)
 
     # Go up TWO levels from this file:
     # common → nutrition-ocr → FRI
     fri_root = os.path.dirname(os.path.dirname(os.path.dirname(here)))
 
-    return os.path.join(fri_root, "data_ocr", "img")
+    return os.path.join(fri_root, "data_ocr", data_name, "img")
 
 
-def get_demo_data(path=None):
-    # Assuming get_demo_data_path() returns the correct file path
-    if path is None:
-        data_path = get_demo_data_path() + "/metadata.jsonl"
-    else:
-        data_path = path + "/metadata.jsonl"
+def get_data(data_name="demo"):
+    data_path = get_data_path(data_name) + "/metadata.jsonl"
 
     # Open the file and iterate through lines
     with open(data_path, 'r', encoding='utf-8') as file:
@@ -109,7 +105,7 @@ def get_demo_data(path=None):
 
             # Extract the file_name
             file_name = data.get('file_name', "")
-            file_name = os.path.join(get_demo_data_path(), file_name)
+            file_name = os.path.join(get_data_path(data_name), file_name)
 
             # Yielding pairs of file_name (img) and text_sequence (label)
             yield file_name, text_sequence
