@@ -27,7 +27,7 @@ def preprocess(image, debug=False):
         step += 1
         cv2.imwrite(f"debug/{step}_resized.jpg", image)
 
-    # Invert colors only if the mean pixel value indicates a dark background
+    # TODO: Invert colors missing robust method to know whether to invert or not
     # mean_brightness = np.mean(image)
     # if mean_brightness > 127:
     #    image = cv2.bitwise_not(image)

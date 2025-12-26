@@ -81,7 +81,7 @@ def load_jsonl(jsonl_path):
 
 
 def get_demo_data_path():
-    return "data_ocr/img/"
+    return "../data_ocr/img/"
 
 
 def get_demo_data(path=None):
