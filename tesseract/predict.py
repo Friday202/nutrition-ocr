@@ -1,7 +1,8 @@
 import cv2
 import pytesseract
-from common.helpers import create_folder
-import numpy as np
+import os
+
+from common.helpers import create_folder, get_demo_data
 
 
 def preprocess(image, debug=False):
@@ -113,3 +114,29 @@ def postprocess(ocr_data):
     ocr_text = " ".join(ocr_data["text"].tolist())
 
     return ocr_text
+
+
+def set_tesseract_path(tesseract_path):
+    if not os.path.isfile(tesseract_path):
+        raise ValueError(f"The provided Tesseract path is invalid: {tesseract_path}")
+    else:
+        print("Using Tesseract executable at:", tesseract_path)
+
+    pytesseract.pytesseract.tesseract_cmd = tesseract_path
+
+
+if __name__ == "__main__":
+    # Run this if you want on a single image for testing
+    set_tesseract_path(r"C:\Program Files\Tesseract-OCR\tesseract.exe")
+
+    img = "003.jpg"
+
+    relation_to_root = "../"
+
+    for image_path, ground_truth in get_demo_data(relation_to_root + "../data_ocr/img/"):
+        if os.path.basename(image_path) != img:
+            continue
+
+        text = run_prediction(relation_to_root + image_path, debug=True)
+        print("Extracted Text:", text)
+        print("Ground Truth:", ground_truth)

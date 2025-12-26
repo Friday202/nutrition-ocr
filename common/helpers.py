@@ -107,3 +107,6 @@ def get_demo_data(path=None):
 
             # Yielding pairs of file_name (img) and text_sequence (label)
             yield file_name, text_sequence
+
+
+# Add comon evaluation code, CER, WER, substring recall, char precision etc.
