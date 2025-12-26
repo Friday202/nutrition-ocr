@@ -1,6 +1,4 @@
 # Script to generate results using a trained model
-import os
-
 import common.helpers as helpers
 import tesseract.predict as tesseract
 import donut.predict as donut
