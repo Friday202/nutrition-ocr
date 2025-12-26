@@ -1,10 +1,12 @@
 # Script to generate results using a trained model
 
-import common.helpers as helpers
 import pytesseract
-import tesseract_ocr.predict as tesseract
-import donut_ocr.predict as donut
 import os
+
+import common.helpers as helpers
+import tesseract.predict as tesseract
+import donut.predict as donut
+import paddleocr.predict as paddleocr
 
 
 def set_tesseract_path(tesseract_path):
