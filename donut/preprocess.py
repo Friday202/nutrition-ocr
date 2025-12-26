@@ -9,6 +9,7 @@ import os
 import numpy as np
 import config
 import common.helpers as helpers
+import random
 
 
 def get_processed_dataset(test=False):
@@ -46,7 +47,7 @@ def get_processor():
 def create_jsons_from_xslx(key_file_path, is_flat=False, is_slim=False):
     df = pd.read_excel(key_file_path / "nutris.xlsx")
 
-    n_slim = 5000
+    n_slim = 100  # 5000 - Test only for now
     n_rows = len(df)
 
     if n_rows <= n_slim or not is_slim:
@@ -110,8 +111,8 @@ def process_ingredients(text):
                 current.append(char)
                 continue
             # Don't split if part of a number (digit before AND after comma)
-            prev_char = text[i-1] if i > 0 else ""
-            next_char = text[i+1] if i+1 < len(text) else ""
+            prev_char = text[i - 1] if i > 0 else ""
+            next_char = text[i + 1] if i + 1 < len(text) else ""
             if prev_char.isdigit() and next_char.isdigit():
                 current.append(char)
                 continue
@@ -161,6 +162,7 @@ def create_json_meta_data_file(data_name, overwrite=True):
         for entry in json_list:
             json.dump(entry, outfile, ensure_ascii=False)
             outfile.write('\n')
+
 
 """
 def tokenize_dataset(dataset):
@@ -304,7 +306,7 @@ def transform_and_tokenize(sample, processor, split="train", max_length=512, ign
 
 
 def generate_jsons(dataset_type, overwrite=True):
-    if "nutris" not in dataset_type and not overwrite:
+    if "nutris" not in dataset_type:
         return  # Nothing to do sroie already has jsons
 
     is_flat = "flat" in dataset_type
@@ -315,67 +317,67 @@ def generate_jsons(dataset_type, overwrite=True):
     if "is_slim":
         dataset_type = dataset_type.replace("-slim", "")
 
-    key_file_path = helpers.get_key_folder_path(dataset_type)
-
     # Remove previous json files if overwrite is True
     if overwrite:
+        key_file_path = helpers.get_key_folder_path(dataset_type)
+
         for json_file in key_file_path.glob("*.json"):
             os.remove(json_file)
         print(f"[INFO] Removed existing JSON files in '{key_file_path}'.")
 
-    create_jsons_from_xslx(key_file_path, is_flat=is_flat, is_slim=is_slim)
+        create_jsons_from_xslx(key_file_path, is_flat=is_flat, is_slim=is_slim)
+    else:
+        print(f"[INFO] JSON files already exist for '{dataset_type}', skipping generation.")
 
     return dataset_type
 
 
-def preprocess(dataset_type):
+def preprocess(dataset_type, debug=False):
     print(f"[INFO] Preprocessing dataset type: {dataset_type}")
+    original_name = dataset_type
 
     # Generate JSON files if needed
-    dataset_type = generate_jsons(dataset_type)
+    dataset_type = generate_jsons(dataset_type, overwrite=True)
 
     # Create metadata.jsonl file
-    create_json_meta_data_file(data_name=dataset_type)
-
-    exit(3)
-
-    image_path = Path(config.DATA_DIR).joinpath("img")
+    create_json_meta_data_file(data_name=dataset_type, overwrite=True)
 
     # Load dataset
+    image_path = helpers.get_img_folder_path(dataset_type)
     dataset = load_dataset("imagefolder", data_dir=image_path, split="train")
+
+    print(f"[INFO] Dataset has {len(dataset)} images")
+    print(f"[INFO] Dataset features are: {dataset.features.keys()}")
+
+    if debug:
+        random_sample = random.randint(0, len(dataset)) - 1
+        print(f"[DEBUG] OCR text is {dataset[random_sample]['text']}")
+        dataset[random_sample]['image'].resize((720, 960)).show()
+        quit(0)
 
     # Tokenize dataset
     new_special_tokens = []  # new tokens which will be added to the tokenizer
-    task_start_token = "<s>"  # start of task token
+    task_start_token = "<s_sl_ingredients>"  # start of task token
     eos_token = "</s>"  # eos token of tokenizer
 
     # proc_dataset = dataset.map (
     #     lambda sample: preprocess_documents_for_donut(sample, new_special_tokens, task_start_token, eos_token)
     # )
 
-    # proc_dataset = dataset.map(
-    #     lambda sample: preprocess_documents_for_donut(sample, new_special_tokens, task_start_token, eos_token),
-    #     batched=False,
-    #     batch_size=1
-    # )
-
-    # Load processor
+    # Load original processor
     processor = DonutProcessor.from_pretrained("naver-clova-ix/donut-base")
 
     proc_dataset = dataset.map(
-       lambda batch: preprocess_documents_for_donut_batch(batch, new_special_tokens, task_start_token, eos_token),
-       batched=True,
-       batch_size=1,
+        lambda batch: preprocess_documents_for_donut_batch(batch, new_special_tokens, task_start_token, eos_token),
+        batched=True,
+        batch_size=1,
     )
 
-    # Load processor
-    processor = DonutProcessor.from_pretrained("naver-clova-ix/donut-base")
-
-    # add new special tokens to tokenizer
+    # Add new special tokens to tokenizer
     processor.tokenizer.add_special_tokens(
         {"additional_special_tokens": new_special_tokens + [task_start_token] + [eos_token]})
     processor.feature_extractor.size = [720, 960]  # should be (width, height)
-    processor.feature_extractor.do_align_long_axis = False
+    processor.feature_extractor.do_align_long_axis = True  # False if dataset_type == "sroie" else True
 
     processed_dataset = proc_dataset.map(
         lambda sample: transform_and_tokenize(sample, processor=processor, split="train"),
@@ -383,8 +385,10 @@ def preprocess(dataset_type):
     )
 
     # Save processed dataset and processor
-    processed_dataset.save_to_disk(config.PROCESSED_DATASET_DIR)
-    processor.save_pretrained(config.PROCESSOR_DIR)
+    processed_dataset.save_to_disk(original_name + "-dataset")
+    processor.save_pretrained(original_name + "-processor")
+
+    print(f"[INFO] Preprocessing completed. Processed dataset and processor saved.")
 
 
 if __name__ == "__main__":

@@ -187,5 +187,6 @@ donut/processed_dataset_ocr
 donut/processor_ocr
 donut/processed_dataset_ocr_ingredients
 donut/processor_ocr_ingredients
+donut/nutris*
 tesseract/debug
 results
