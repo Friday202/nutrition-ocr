@@ -38,7 +38,7 @@ def run_prediction(sample, model, processor, device):
 def evaluate():
     processed_dataset = preprocess.get_processed_dataset()
     processor = DonutProcessor.from_pretrained(config.PROCESSOR_DIR)
-    model = VisionEncoderDecoderModel.from_pretrained(config.OUTPUT_DIR + "/checkpoint-10000")  # config.MODEL_DIR
+    model = VisionEncoderDecoderModel.from_pretrained(config.OUTPUT_DIR + "/checkpoint-19000")  # config.MODEL_DIR
 
     assert len(processor.tokenizer) == model.config.decoder.vocab_size
 

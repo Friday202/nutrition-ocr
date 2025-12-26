@@ -1,8 +1,22 @@
+import torch
+
+_original_torch_load = torch.load
+
+def torch_load_unsafe(*args, **kwargs):
+    kwargs["weights_only"] = False
+    return _original_torch_load(*args, **kwargs)
+
+torch.load = torch_load_unsafe
+
+
 from transformers import Seq2SeqTrainingArguments, Seq2SeqTrainer, VisionEncoderDecoderModel, EarlyStoppingCallback
 from pathlib import Path
 
 import preprocess
 import config
+
+import torch
+import numpy as np
 
 
 def train():
@@ -76,4 +90,9 @@ def train():
 
 
 if __name__ == "__main__":
+    torch.serialization.add_safe_globals([
+        np.ndarray,
+        np.core.multiarray._reconstruct,
+    ])
+
     train()

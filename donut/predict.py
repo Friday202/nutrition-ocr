@@ -38,7 +38,7 @@ def run_prediction(sample, model, processor, device, has_target=True):
 
 def load_model_and_processor():
     processor = DonutProcessor.from_pretrained("donut_ocr/processor_ocr_ingredients")
-    model = VisionEncoderDecoderModel.from_pretrained("donut_ocr/outputs/donut-ocr-ingredients" + "/checkpoint-10000")
+    model = VisionEncoderDecoderModel.from_pretrained("donut_ocr/outputs/donut-ocr-ingredients" + "/checkpoint-19000")
 
     assert len(processor.tokenizer) == model.config.decoder.vocab_size
 
