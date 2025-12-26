@@ -51,16 +51,6 @@ def evaluate():
         print(f"Reference:\n {target}")
         print(f"Prediction:\n {prediction}")
 
-    quit()
-
-    x = ["train", "test", "validation"]
-    for xx in x:
-        for i in range(len(processed_dataset[xx])):
-            sample = processed_dataset[xx][i]
-            prediction, target = run_prediction(sample, model, processor, device)
-            print(f"Reference:\n{target}")
-            print(f"Prediction:\n{prediction}")
-
 
 if __name__ == "__main__":
     evaluate()
