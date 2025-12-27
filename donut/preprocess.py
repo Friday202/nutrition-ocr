@@ -50,7 +50,7 @@ def get_processor():
 def create_jsons_from_xslx(key_file_path, is_flat=False, is_slim=False):
     df = pd.read_excel(key_file_path / "nutris.xlsx")
 
-    n_slim = 100  # 5000 - Test only for now
+    n_slim = 40  # 5000 - Test only for now
     n_rows = len(df)
 
     if n_rows <= n_slim or not is_slim:
@@ -169,7 +169,7 @@ def create_json_meta_data_file(data_name, overwrite=True):
 
 def generate_jsons(dataset_type, overwrite=True):
     if "nutris" not in dataset_type:
-        return  # Nothing to do sroie already has jsons
+        return dataset_type  # Nothing to do sroie already has jsons
 
     is_flat = "flat" in dataset_type
     if is_flat:
@@ -194,57 +194,6 @@ def generate_jsons(dataset_type, overwrite=True):
     return dataset_type
 
 
-"""
-def tokenize_dataset(dataset):
-    new_special_tokens = []  # new tokens which will be added to the tokenizer
-    task_start_token = "<s>"  # start of task token
-    eos_token = "</s>"  # eos token of tokenizer
-
-    def json2token(obj, update_special_tokens_for_json_key: bool = True, sort_json_key: bool = True):
-       
-        if type(obj) == dict:
-            if len(obj) == 1 and "text_sequence" in obj:
-                return obj["text_sequence"]
-            else:
-                output = ""
-                if sort_json_key:
-                    keys = sorted(obj.keys(), reverse=True)
-                else:
-                    keys = obj.keys()
-                for k in keys:
-                    if update_special_tokens_for_json_key:
-                        new_special_tokens.append(fr"<s_{k}>") if fr"<s_{k}>" not in new_special_tokens else None
-                        new_special_tokens.append(fr"</s_{k}>") if fr"</s_{k}>" not in new_special_tokens else None
-                    output += (
-                            fr"<s_{k}>"
-                            + json2token(obj[k], update_special_tokens_for_json_key, sort_json_key)
-                            + fr"</s_{k}>"
-                    )
-                return output
-        elif type(obj) == list:
-            return r"<sep/>".join(
-                [json2token(item, update_special_tokens_for_json_key, sort_json_key) for item in obj]
-            )
-        else:
-            # excluded special tokens for now
-            obj = str(obj)
-            if f"<{obj}/>" in new_special_tokens:
-                obj = f"<{obj}/>"  # for categorical special tokens
-            return obj
-
-    def preprocess_documents_for_donut(sample):
-        # create Donut-style input
-        text = json.loads(sample["text"])
-        d_doc = task_start_token + json2token(text) + eos_token
-        # convert all images to RGB
-        image = sample["image"].convert('RGB')
-        return {"image": image, "text": d_doc}
-
-    dataset = dataset.map(preprocess_documents_for_donut)
-    return dataset, new_special_tokens, task_start_token, eos_token
-"""
-
-
 def preprocess_documents_for_donut(sample, new_special_tokens, task_start_token, eos_token):
     """
     Convert a dataset sample into Donut-style (image, text) pair.
@@ -262,6 +211,7 @@ def preprocess_documents_for_donut_batch(batch, new_special_tokens, task_start_t
         text_obj = json.loads(txt)
         d_doc = task_start_token + json2token(text_obj, new_special_tokens) + eos_token
         image = img.convert("RGB")
+
         images.append(image)
         texts.append(d_doc)
 
@@ -335,9 +285,6 @@ def transform_and_tokenize(sample, processor, split="train", max_length=512, ign
     return {"pixel_values": pixel_values, "labels": labels, "target_sequence": sample["text"]}
 
 
-
-
-
 def preprocess(dataset_type, debug=False):
     print(f"[INFO] Preprocessing dataset type: {dataset_type}")
     original_name = dataset_type
@@ -370,18 +317,22 @@ def preprocess(dataset_type, debug=False):
     #     lambda sample: preprocess_documents_for_donut(sample, new_special_tokens, task_start_token, eos_token)
     # )
 
-    # Load original processor
-    processor = DonutProcessor.from_pretrained("naver-clova-ix/donut-base")
-
     proc_dataset = dataset.map(
         lambda batch: preprocess_documents_for_donut_batch(batch, new_special_tokens, task_start_token, eos_token),
         batched=True,
         batch_size=1,
     )
 
+    print(f"[INFO]  Sample: {proc_dataset[35]['text']}")
+    print(f"[INFO]  New special tokens: {new_special_tokens + [task_start_token] + [eos_token]}")
+
+    # Load original processor
+    processor = DonutProcessor.from_pretrained("naver-clova-ix/donut-base")
+
     # Add new special tokens to tokenizer
     processor.tokenizer.add_special_tokens(
         {"additional_special_tokens": new_special_tokens + [task_start_token] + [eos_token]})
+    # Resize image embeddings
     processor.feature_extractor.size = [720, 960]  # should be (width, height)
     processor.feature_extractor.do_align_long_axis = True  # False if dataset_type == "sroie" else True
 
@@ -400,5 +351,6 @@ def preprocess(dataset_type, debug=False):
 if __name__ == "__main__":
     # "nutris" with optional "-slim" / "-flat" or "sroie", slim is 5000 samples full is 23000 samples
     data = "nutris-slim"
+    data = "sroie"
 
     preprocess(data)
