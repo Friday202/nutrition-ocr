@@ -205,7 +205,7 @@ def preprocess_documents_for_donut(sample, new_special_tokens, task_start_token,
 
 
 def preprocess_documents_for_donut_batch(batch, new_special_tokens, task_start_token, eos_token):
-    images, texts, outputs = [], [], []
+    images, texts = [], []
 
     for img, txt in zip(batch["image"], batch["text"]):
         text_obj = json.loads(txt)
@@ -310,7 +310,7 @@ def preprocess(dataset_type, debug=False):
 
     # Tokenize dataset
     new_special_tokens = []  # new tokens which will be added to the tokenizer
-    task_start_token = "<s_sl_ingredients>" if dataset_type == "nutris" else "<s>"  # start of task token
+    task_start_token = "<s>"  # task start token of tokenizer
     eos_token = "</s>"  # eos token of tokenizer
 
     # proc_dataset = dataset.map (
@@ -322,6 +322,8 @@ def preprocess(dataset_type, debug=False):
         batched=True,
         batch_size=1,
     )
+
+    new_special_tokens = list(dict.fromkeys(new_special_tokens))  # remove duplicates while preserving order
 
     print(f"[INFO]  Sample: {proc_dataset[35]['text']}")
     print(f"[INFO]  New special tokens: {new_special_tokens + [task_start_token] + [eos_token]}")
@@ -335,6 +337,8 @@ def preprocess(dataset_type, debug=False):
     # Resize image embeddings
     processor.feature_extractor.size = [720, 960]  # should be (width, height)
     processor.feature_extractor.do_align_long_axis = True  # False if dataset_type == "sroie" else True
+
+    quit(2)
 
     processed_dataset = proc_dataset.map(
         lambda sample: transform_and_tokenize(sample, processor=processor, split="train"),
@@ -351,6 +355,6 @@ def preprocess(dataset_type, debug=False):
 if __name__ == "__main__":
     # "nutris" with optional "-slim" / "-flat" or "sroie", slim is 5000 samples full is 23000 samples
     data = "nutris-slim"
-    data = "sroie"
+    # data = "sroie"
 
     preprocess(data)
