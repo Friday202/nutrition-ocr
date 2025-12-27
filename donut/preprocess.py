@@ -258,6 +258,7 @@ def transform_and_tokenize(sample, processor, split="train", max_length=512, ign
     # Convert grayscale images to RGB
     image = sample["image"]
     if image.mode != "RGB":
+        print("[WARNING] Found greyscale image converting it to RGB mode.")
         image = image.convert("RGB")
 
     try:
@@ -267,6 +268,7 @@ def transform_and_tokenize(sample, processor, split="train", max_length=512, ign
     except Exception as e:
         print(sample)
         print(f"Error: {e}")
+        quit(5)
         return None  # use None, not {}
 
     # tokenize document
@@ -337,8 +339,6 @@ def preprocess(dataset_type, debug=False):
     # Resize image embeddings
     processor.feature_extractor.size = [720, 960]  # should be (width, height)
     processor.feature_extractor.do_align_long_axis = True  # False if dataset_type == "sroie" else True
-
-    quit(2)
 
     processed_dataset = proc_dataset.map(
         lambda sample: transform_and_tokenize(sample, processor=processor, split="train"),
