@@ -1,56 +1,21 @@
-from datasets import load_from_disk
-from pathlib import Path
-from transformers import DonutProcessor
 from datasets import load_dataset
-import torch
-import json
+from transformers import DonutProcessor
+
 import pandas as pd
-import os
 import numpy as np
-import config
-import common.helpers as helpers
+
+from pathlib import Path
 import random
+import json
+import os
 
-
-def get_processed_dataset(test=False):
-    processed_dataset = load_from_disk(config.PROCESSED_DATASET_DIR)
-
-    if test:
-        sample = processed_dataset[0]
-        img_list = sample["pixel_values"]
-        img_tensor = torch.tensor(img_list, dtype=torch.float32)
-        print(f"Image tensor shape: {img_tensor.shape}")
-
-    train_test_split = processed_dataset.train_test_split(
-        test_size=config.TEST_SIZE, seed=config.SEED
-    )
-
-    train_val_split = train_test_split["train"].train_test_split(
-        test_size=config.VAL_SIZE, seed=config.SEED
-    )
-
-    # Step 3: Combine all splits into one dict
-    processed_dataset = {
-        "train": train_val_split["train"],
-        "validation": train_val_split["test"],
-        "test": train_test_split["test"]
-    }
-
-    return processed_dataset
-
-
-def get_processor():
-    processor = DonutProcessor.from_pretrained(config.PROCESSOR_DIR)
-    return processor
-
-
-# Check functions above ^
+import common.helpers as helpers
 
 
 def create_jsons_from_xslx(key_file_path, is_flat=False, is_slim=False):
     df = pd.read_excel(key_file_path / "nutris.xlsx")
 
-    n_slim = 40  # 5000 - Test only for now
+    n_slim = 1000  # 5000 - Test only for now
     n_rows = len(df)
 
     if n_rows <= n_slim or not is_slim:
@@ -354,7 +319,7 @@ def preprocess(dataset_type, debug=False):
 
 if __name__ == "__main__":
     # "nutris" with optional "-slim" / "-flat" or "sroie", slim is 5000 samples full is 23000 samples
-    # data = "nutris-slim"
-    data = "sroie"
+    data = "nutris-slim"
+    # data = "sroie"
 
     preprocess(data)

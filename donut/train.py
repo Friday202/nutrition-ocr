@@ -20,10 +20,10 @@ import torch
 import numpy as np
 
 
-def train():
+def train(data_type):
     # Grab processed dataset and processor
-    processed_dataset = preprocess.get_processed_dataset()
-    processor = preprocess.get_processor()
+    processed_dataset = preprocess.get_processed_dataset(data_type)
+    processor = preprocess.get_processor(data_type)
 
     # Load pre-trained Donut model
     model = VisionEncoderDecoderModel.from_pretrained("naver-clova-ix/donut-base")
@@ -96,4 +96,6 @@ if __name__ == "__main__":
         np.core.multiarray._reconstruct,
     ])
 
-    train()
+    dataset_type = "sorie"
+
+    train(dataset_type)
