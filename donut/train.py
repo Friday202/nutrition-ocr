@@ -115,6 +115,6 @@ if __name__ == "__main__":
         np.core.multiarray._reconstruct,
     ])
 
-    dataset_type = "sroie"
+    dataset_type = "nutris-slim"
 
     train(dataset_type)

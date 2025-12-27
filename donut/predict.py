@@ -132,7 +132,7 @@ def run_prediction_from_image(
 
 if __name__ == "__main__":
     # Runs prediction on test set from his dataset not arbitrary image
-    data_type = "sroie"
+    data_type = "nutris-slim"
 
     # Load processor and model, move model to device
     processor = get_processor(data_type)
@@ -143,9 +143,16 @@ if __name__ == "__main__":
     model.to(device)
 
     # Grab the first sample from the processed test section of dataset
-    test_sample = get_processed_dataset(data_type)["test"][0]
+    for i in range(5):
+        test_sample = get_processed_dataset(data_type)["test"][i]
 
-    # Run prediction
-    prediction, target = run_prediction(test_sample, model, processor, device)
-    print("Prediction:", prediction)
-    print("Target:", target)
+        # Run prediction
+        prediction, target = run_prediction(test_sample, model, processor, device)
+
+        # target_list = [ingredient['text'] for ingredient in target['ingredients']]
+        # prediction_list = [ingredient['text'] for ingredient in prediction['ingredients']]
+
+        print("Target:", target)
+        print("Prediction:", prediction)
+        print("-" * 50)
+
