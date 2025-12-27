@@ -357,7 +357,7 @@ def preprocess(dataset_type, debug=False):
 
     # Tokenize dataset
     new_special_tokens = []  # new tokens which will be added to the tokenizer
-    task_start_token = "<s_sl_ingredients>"  # start of task token
+    task_start_token = "<s_sl_ingredients>" if dataset_type == "nutris" else "<s>"  # start of task token
     eos_token = "</s>"  # eos token of tokenizer
 
     # proc_dataset = dataset.map (
