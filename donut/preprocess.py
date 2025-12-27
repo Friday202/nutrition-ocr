@@ -354,7 +354,7 @@ def preprocess(dataset_type, debug=False):
 
 if __name__ == "__main__":
     # "nutris" with optional "-slim" / "-flat" or "sroie", slim is 5000 samples full is 23000 samples
-    data = "nutris-slim"
-    # data = "sroie"
+    # data = "nutris-slim"
+    data = "sroie"
 
     preprocess(data)
