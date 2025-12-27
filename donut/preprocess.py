@@ -44,6 +44,9 @@ def get_processor():
     return processor
 
 
+# Check functions above ^
+
+
 def create_jsons_from_xslx(key_file_path, is_flat=False, is_slim=False):
     df = pd.read_excel(key_file_path / "nutris.xlsx")
 
@@ -162,6 +165,33 @@ def create_json_meta_data_file(data_name, overwrite=True):
         for entry in json_list:
             json.dump(entry, outfile, ensure_ascii=False)
             outfile.write('\n')
+
+
+def generate_jsons(dataset_type, overwrite=True):
+    if "nutris" not in dataset_type:
+        return  # Nothing to do sroie already has jsons
+
+    is_flat = "flat" in dataset_type
+    if is_flat:
+        dataset_type = dataset_type.replace("-flat", "")
+
+    is_slim = "slim" in dataset_type
+    if "is_slim":
+        dataset_type = dataset_type.replace("-slim", "")
+
+    # Remove previous json files if overwrite is True
+    if overwrite:
+        key_file_path = helpers.get_key_folder_path(dataset_type)
+
+        for json_file in key_file_path.glob("*.json"):
+            os.remove(json_file)
+        print(f"[INFO] Removed existing JSON files in '{key_file_path}'.")
+
+        create_jsons_from_xslx(key_file_path, is_flat=is_flat, is_slim=is_slim)
+    else:
+        print(f"[INFO] JSON files already exist for '{dataset_type}', skipping generation.")
+
+    return dataset_type
 
 
 """
@@ -305,31 +335,7 @@ def transform_and_tokenize(sample, processor, split="train", max_length=512, ign
     return {"pixel_values": pixel_values, "labels": labels, "target_sequence": sample["text"]}
 
 
-def generate_jsons(dataset_type, overwrite=True):
-    if "nutris" not in dataset_type:
-        return  # Nothing to do sroie already has jsons
 
-    is_flat = "flat" in dataset_type
-    if is_flat:
-        dataset_type = dataset_type.replace("-flat", "")
-
-    is_slim = "slim" in dataset_type
-    if "is_slim":
-        dataset_type = dataset_type.replace("-slim", "")
-
-    # Remove previous json files if overwrite is True
-    if overwrite:
-        key_file_path = helpers.get_key_folder_path(dataset_type)
-
-        for json_file in key_file_path.glob("*.json"):
-            os.remove(json_file)
-        print(f"[INFO] Removed existing JSON files in '{key_file_path}'.")
-
-        create_jsons_from_xslx(key_file_path, is_flat=is_flat, is_slim=is_slim)
-    else:
-        print(f"[INFO] JSON files already exist for '{dataset_type}', skipping generation.")
-
-    return dataset_type
 
 
 def preprocess(dataset_type, debug=False):
