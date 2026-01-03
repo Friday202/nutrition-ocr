@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 import os
 import json
-import numpy as np
 
 
 def plot(model_type, version=''):
