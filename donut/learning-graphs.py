@@ -57,7 +57,7 @@ def plot(model_type, version=''):
     plt.plot(val_epochs, val_vals, label='Validation Loss', color='orange', marker='x')
 
     # Adding title and labels
-    plt.title('Training and Validation Loss Over Epochs')
+    plt.title('Training and Validation Loss Over Epochs for: ' + model_type + version)
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.legend()
