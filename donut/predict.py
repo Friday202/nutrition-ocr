@@ -155,4 +155,3 @@ if __name__ == "__main__":
         print("Target:", target)
         print("Prediction:", prediction)
         print("-" * 50)
-
