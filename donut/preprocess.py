@@ -15,7 +15,7 @@ import common.helpers as helpers
 def create_jsons_from_xslx(key_file_path, is_flat=False, is_slim=False):
     df = pd.read_excel(key_file_path / "nutris.xlsx")
 
-    n_slim = 1000  # 5000 - Test only for now
+    n_slim = 3000  # 5000 - Test only for now
     n_rows = len(df)
 
     if n_rows <= n_slim or not is_slim:

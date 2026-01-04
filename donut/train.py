@@ -77,7 +77,7 @@ def train(data_type, start_over=False):
 
     training_args = Seq2SeqTrainingArguments(
         output_dir=output_dir,
-        num_train_epochs=5,  # TOTAL VALUE
+        num_train_epochs=7,  # TOTAL VALUE
         learning_rate=2e-5,
         per_device_train_batch_size=2,
         weight_decay=0.01,
