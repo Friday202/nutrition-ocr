@@ -41,8 +41,13 @@ def create_jsons_from_xslx(key_file_path, is_flat=False, is_slim=False):
             # Else split into list
             ingredients = process_ingredients(text)
 
-        # Wrap each ingredient in a dict apparently that is needed
-        ingredients_wrapped = [{"text": ing} for ing in ingredients]
+        # Wrap ingredients in dicts
+        if isinstance(ingredients, list):
+            # If more than 1 ingredient (list), wrap each
+            ingredients_wrapped = [{"text": ing} for ing in ingredients]
+        else:
+            # Single ingredient (string), wrap directly
+            ingredients_wrapped = [{"text": ingredients}] if ingredients else []
 
         json_data = {"ingredients": ingredients_wrapped}
 
