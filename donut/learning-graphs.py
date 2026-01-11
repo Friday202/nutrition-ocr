@@ -3,7 +3,7 @@ import os
 import json
 
 
-def plot(model_type, version=''):
+def plot_loss(model_type, version=''):
     if version:
         path = f'outputs/{model_type}/{version}/trainer_state.json'
     else:
@@ -54,7 +54,7 @@ def plot(model_type, version=''):
     plt.plot(train_epochs, train_vals, label='Training Loss', color='blue', marker='o')
 
     # Plot validation loss (will handle gaps automatically with NaN)
-    plt.plot(val_epochs, val_vals, label='Validation Loss', color='orange', marker='x')
+    plt.plot(val_epochs, val_vals, label='Validation Loss', color='red', marker='x')
 
     # Adding title and labels
     plt.title('Training and Validation Loss Over Epochs for: ' + model_type + version)
@@ -65,9 +65,46 @@ def plot(model_type, version=''):
     plt.show()
 
 
+def plot_learning_rate(model_type, version=''):
+    if version:
+        path = f'outputs/{model_type}/{version}/trainer_state.json'
+    else:
+        checkpoints = [d for d in os.listdir(f'outputs/{model_type}/') if d.startswith('checkpoint-')]
+        if not checkpoints:
+            raise FileNotFoundError("No checkpoints found.")
+        latest_checkpoint = max(checkpoints, key=lambda x: int(x.split('-')[1]))
+        path = f'outputs/{model_type}/{latest_checkpoint}/trainer_state.json'
+
+    with open(path, 'r') as file:
+        trainer_state = json.load(file)
+
+    log_history = trainer_state['log_history']
+
+    steps = []
+    learning_rates = []
+
+    for entry in log_history:
+        if 'learning_rate' in entry and 'step' in entry:
+            steps.append(entry['step'])
+            learning_rates.append(entry['learning_rate'])
+
+    if not learning_rates:
+        raise ValueError("No learning rate information found in trainer_state.json")
+
+    # Plot
+    plt.figure(figsize=(10, 6))
+    plt.plot(steps, learning_rates, color='green')
+    plt.title('Learning Rate Schedule\n' + model_type + version)
+    plt.xlabel('Training Steps')
+    plt.ylabel('Learning Rate')
+    plt.grid(True)
+    plt.show()
+
+
 if __name__ == "__main__":
     model_type = "nutris-slim"
     # model_type = "sroie"
     version = ""
 
-    plot(model_type, version)
+    plot_loss(model_type, version)
+    plot_learning_rate(model_type, version)
