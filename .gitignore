@@ -192,3 +192,4 @@ donut/sroie*
 tesseract/debug
 results
 latex/
+donut/ocr_eval_results.csv
