@@ -5,6 +5,8 @@ from PIL import Image
 import ast
 import re
 from typing import List, Union
+import common.helpers as helpers
+import pandas as pd
 
 
 def get_processed_dataset(dataset_type, test_size=0.1, validation_size=0.1, debug=False, seed=42):
@@ -209,7 +211,7 @@ def parse_ingredients(raw: Union[str, dict]) -> List[str]:
 if __name__ == "__main__":
     # Runs prediction on test set from his dataset not arbitrary image
     data_type = "nutris-slim"
-    checkpoint_path = "/checkpoint-7290"
+    checkpoint_path = ""
 
     # Load processor and model, move model to device
     processor = get_processor(data_type)
@@ -219,9 +221,12 @@ if __name__ == "__main__":
     check_model_processor_compatibility(model, processor)
     model.to(device)
 
+    rows = []
+
     # Grab the first sample from the processed test section of dataset
-    for i in range(20):
-        test_sample = get_processed_dataset(data_type)["test"][i]
+    dataset = get_processed_dataset(data_type)["test"]
+    for i in range(len(dataset)):
+        test_sample = dataset[i]
 
         # Run prediction
         prediction, target = run_prediction(test_sample, model, processor, device)
@@ -229,6 +234,17 @@ if __name__ == "__main__":
         target = parse_ingredients(target)
         prediction = parse_ingredients(prediction)
 
+        wer = helpers.compute_wer(target, prediction)
+        cer = helpers.compute_cer(target, prediction)
+
         print("Target:", target)
         print("Prediction:", prediction)
         print("-" * 50)
+
+        rows.append({
+            "WER": wer,
+            "CER": cer
+        })
+
+    df = pd.DataFrame(rows)
+    df.to_csv("ocr_eval_results.csv", index=False)
