@@ -2,6 +2,9 @@ import os
 import shutil
 import json
 from pathlib import Path
+from jiwer import wer, cer
+import re
+import unicodedata
 
 
 def create_folder(name, flush=False, parent_path="results/"):
@@ -125,3 +128,31 @@ def get_data(data_name="demo"):
 
 
 # Add comon evaluation code, CER, WER, substring recall, char precision etc.
+def normalize(s: str) -> str:
+    s = s.lower()
+    s = unicodedata.normalize("NFKD", s)
+    s = "".join(c for c in s if not unicodedata.combining(c))
+    s = re.sub(r"[^\w\s]", "", s)   # remove punctuation
+    s = re.sub(r"\s+", " ", s).strip()
+    return s
+
+
+def _to_text(x):
+    if isinstance(x, list):
+        return " ".join(x)
+    return str(x)
+
+
+def compute_wer(gt, pred):
+    gt_text = normalize(_to_text(gt))
+    pred_text = normalize(_to_text(pred))
+    return wer(gt_text, pred_text)
+
+
+def compute_cer(gt, pred):
+    gt_text = normalize(_to_text(gt))
+    pred_text = normalize(_to_text(pred))
+    return cer(gt_text, pred_text)
+
+
+
