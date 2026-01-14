@@ -15,6 +15,24 @@ import common.helpers as helpers
 def create_jsons_from_xslx(key_file_path, is_flat=False, is_slim=False):
     df = pd.read_excel(key_file_path / "nutris.xlsx")
 
+    # Print original size
+    print(f"[INFO] Original dataset size: {len(df)} rows.")
+
+    # Safe string series
+    ingredients = df["Ingredients"].fillna("").astype(str)
+
+    # Build drop conditions
+    has_sestavine = ingredients.str.contains("sestavine", case=False, na=False)
+    has_double_space = ingredients.str.contains(r"\s{2,}", regex=True)
+
+    # Drop offending rows
+    df = df[~(has_sestavine | has_double_space)].copy()
+
+    # Normalize in place
+    df["Ingredients"] = df["Ingredients"].str.lower()
+
+    print(f"[INFO] After cleaning, dataset size: {len(df)} rows. We dropped {len(ingredients) - len(df)} rows.")
+
     n_slim = 3000  # 5000 - Test only for now
     n_rows = len(df)
 
@@ -97,8 +115,8 @@ def process_ingredients(text):
         else:
             current.append(char)
 
-    # Add last ingredient
-    ingredient = "".join(current).strip()
+    # Add last ingredient - strip trailing period
+    ingredient = "".join(current).strip().rstrip('.')
     if ingredient:
         ingredients.append(ingredient)
 
@@ -254,7 +272,7 @@ def transform_and_tokenize(sample, processor, split="train", max_length=512, ign
     labels = input_ids.clone()
     labels[labels == processor.tokenizer.pad_token_id] = ignore_id
 
-    return {"pixel_values": pixel_values, "labels": labels, "target_sequence": sample["text"]}
+    return {"pixel_values": pixel_values, "labels": labels, "target_sequence": sample["text"]} # Remove PIL image but keep reference to img path as filename
 
 
 def preprocess(dataset_type, debug=False):
