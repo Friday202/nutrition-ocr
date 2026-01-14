@@ -87,8 +87,8 @@ def run_prediction(sample, model, processor, device, has_target=True):
     if not has_target:
         return prediction, None
 
-    # load reference target
-    target = processor.token2json(sample["target_sequence"])  # What is here target_sequence?
+    # load reference target, dataset has 3 fields for target: "pixel_values" - the image, "labels" - token ids, "target_sequence" - string
+    target = processor.token2json(sample["target_sequence"])
     return prediction, target
 
 
@@ -226,6 +226,7 @@ if __name__ == "__main__":
     # Grab the first sample from the processed test section of dataset
     dataset = get_processed_dataset(data_type)["test"]
     for i in range(len(dataset)):
+        print("Processing sample", i + 1, "of", len(dataset))
         test_sample = dataset[i]
 
         # Run prediction
@@ -234,16 +235,9 @@ if __name__ == "__main__":
         target = parse_ingredients(target)
         prediction = parse_ingredients(prediction)
 
-        wer = helpers.compute_wer(target, prediction)
-        cer = helpers.compute_cer(target, prediction)
-
-        print("Target:", target)
-        print("Prediction:", prediction)
-        print("-" * 50)
-
         rows.append({
-            "WER": wer,
-            "CER": cer
+            "prediction": prediction,
+            "target": target
         })
 
     df = pd.DataFrame(rows)
