@@ -13,27 +13,9 @@ import common.helpers as helpers
 
 
 def create_jsons_from_xslx(key_file_path, is_flat=False, is_slim=False):
-    df = pd.read_excel(key_file_path / "nutris.xlsx")
+    df = helpers.get_nutris_train_dataframe()
 
-    # Print original size
-    print(f"[INFO] Original dataset size: {len(df)} rows.")
-
-    # Safe string series
-    ingredients = df["Ingredients"].fillna("").astype(str)
-
-    # Build drop conditions
-    has_sestavine = ingredients.str.contains("sestavine", case=False, na=False)
-    has_double_space = ingredients.str.contains(r"\s{2,}", regex=True)
-
-    # Drop offending rows
-    df = df[~(has_sestavine | has_double_space)].copy()
-
-    # Normalize in place
-    df["Ingredients"] = df["Ingredients"].str.lower()
-
-    print(f"[INFO] After cleaning, dataset size: {len(df)} rows. We dropped {len(ingredients) - len(df)} rows.")
-
-    n_slim = 3000  # 5000 - Test only for now
+    n_slim = 10  # 5000 - Test only for now
     n_rows = len(df)
 
     if n_rows <= n_slim or not is_slim:
@@ -115,8 +97,8 @@ def process_ingredients(text):
         else:
             current.append(char)
 
-    # Add last ingredient - strip trailing period
-    ingredient = "".join(current).strip().rstrip('.')
+    # Add last ingredient
+    ingredient = "".join(current).strip()
     if ingredient:
         ingredients.append(ingredient)
 
@@ -315,7 +297,7 @@ def preprocess(dataset_type, debug=False):
 
     new_special_tokens = list(dict.fromkeys(new_special_tokens))  # remove duplicates while preserving order
 
-    print(f"[INFO]  Sample: {proc_dataset[35]['text']}")
+    print(f"[INFO]  Sample: {proc_dataset[0]['text']}")
     print(f"[INFO]  New special tokens: {new_special_tokens + [task_start_token] + [eos_token]}")
 
     # Load original processor
