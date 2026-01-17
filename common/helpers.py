@@ -5,6 +5,7 @@ from pathlib import Path
 from jiwer import wer, cer
 import re
 import unicodedata
+import pandas as pd
 
 
 def create_folder(name, flush=False, parent_path="results/"):
@@ -106,6 +107,34 @@ def get_metadata_jsonl_path(data_name):
     return get_img_folder_path(data_name).joinpath("metadata.jsonl")
 
 
+def get_xslx_dataframe(data_name="nutris"):
+    key_file_path = get_key_folder_path(data_name)
+    xslx_file = key_file_path / f"{data_name}.xlsx"
+    df = pd.read_excel(xslx_file)
+    return df
+
+
+def get_nutris_train_dataframe():
+    key_file_path = get_key_folder_path("nutris")
+    xslx_file = key_file_path / "nutris_cleaned_train.xlsx"
+    df = pd.read_excel(xslx_file)
+    return df
+
+
+def get_nutris_test_dataframe():
+    key_file_path = get_key_folder_path("nutris")
+    xslx_file = key_file_path / "nutris_cleaned_test.xlsx"
+    df = pd.read_excel(xslx_file)
+    return df
+
+
+def save_xslx_dataframe(df, save_name, data_name="nutris"):
+    key_file_path = get_key_folder_path(data_name)
+    output_file = key_file_path / save_name
+    df.to_excel(output_file, index=False)
+    print(f"DataFrame saved to {output_file}")
+
+
 def get_data(data_name="demo"):
     jsonl_file = get_metadata_jsonl_path(data_name)
 
@@ -155,4 +184,23 @@ def compute_cer(gt, pred):
     return cer(gt_text, pred_text)
 
 
+def get_normalized_text(s):
+    s = normalize(_to_text(s))
+    return s
 
+
+def compute_fer(gt, pred):
+    n = len(gt)
+    wrong = 0
+
+    # compare up to gt length
+    for i in range(n):
+        p = pred[i] if i < len(pred) else ""
+        if gt[i] != p:
+            wrong += 1
+
+    # any extra predictions beyond gt count as errors
+    if len(pred) > n:
+        wrong += len(pred) - n
+
+    return wrong / n if n > 0 else 0.0
