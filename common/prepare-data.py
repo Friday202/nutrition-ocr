@@ -94,6 +94,13 @@ def clean_ground_truth_text(df):
     )
     assert not cleaned_df["Ingredients"].str.contains(r"\s+%", regex=True).any(), "Whitespace before % still exists"
 
+    # 5.1 Remove spaces after '(' and before ')'
+    cleaned_df["Ingredients"] = (
+        cleaned_df["Ingredients"]
+        .str.replace(r'\(\s+', '(', regex=True)
+        .str.replace(r'\s+\)', ')', regex=True)
+    )
+
     # 6. Ensure single space after comma
     cleaned_df["Ingredients"] = cleaned_df["Ingredients"].str.replace(
         r"\s*,\s*(?=[A-Za-z])", ", ", regex=True
@@ -119,6 +126,30 @@ def clean_ground_truth_text(df):
     total_removed += repeated_mask.sum()
     cleaned_df = cleaned_df[~repeated_mask]
     cleaned_df = cleaned_df.drop(columns=["Repeated Ingredients"])
+
+    # Remove rows with ,% pattern
+    comma_percent_mask = cleaned_df["Ingredients"].str.contains(r",%")
+    print("Removing rows containing ',%':", comma_percent_mask.sum())
+    total_removed += comma_percent_mask.sum()
+    cleaned_df = cleaned_df[~comma_percent_mask]
+
+    # Remove rows with ",)" pattern
+    comma_closeparen_mask = cleaned_df["Ingredients"].str.contains(r",\)")
+    print("Removing rows containing ',)':", comma_closeparen_mask.sum())
+    total_removed += comma_closeparen_mask.sum()
+    cleaned_df = cleaned_df[~comma_closeparen_mask]
+
+    # Remove rows with "(," pattern
+    openparen_comma_mask = cleaned_df["Ingredients"].str.contains(r"\(,")
+    print("Removing rows containing '(,':", openparen_comma_mask.sum())
+    total_removed += openparen_comma_mask.sum()
+    cleaned_df = cleaned_df[~openparen_comma_mask]
+
+    # Remove rows with pattern = r"[^0-9,]%"
+    invalid_percent_mask = cleaned_df["Ingredients"].str.contains(r"[^0-9,]%", regex=True)
+    print("Removing rows containing invalid '%' patterns:", invalid_percent_mask.sum())
+    total_removed += invalid_percent_mask.sum()
+    cleaned_df = cleaned_df[~invalid_percent_mask]
 
     # Print final stats
     print("-"*50)
@@ -156,6 +187,10 @@ def stratified_length_split(df, text_col="Ingredients", test_size=1000, n_bins=2
 
     test_df = df.loc[test_indices].drop(columns=["_len", "_bin"])
     train_df = df.drop(index=test_indices).drop(columns=["_len", "_bin"])
+
+    # Compare ["FileName"] columns to ensure no overlap
+    assert set(train_df["FileName"]).isdisjoint(set(test_df["FileName"])), "Train and test sets have overlapping FileName values"
+    print(f"Train set size: {len(train_df)}, Test set size: {len(test_df)}")
 
     if show_plot:
         train_lens = train_df[text_col].str.len()
