@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import os
 import json
+import pandas as pd
+import common.helpers as helpers
 
 
 def plot_loss(model_type, version=''):
@@ -101,10 +103,118 @@ def plot_learning_rate(model_type, version=''):
     plt.show()
 
 
+import pandas as pd
+import matplotlib.pyplot as plt
+
+
+def plot_cer_and_wer_histogram(csv_path="ocr_eval_results.csv", bins=50, clip_max=1.0):
+    """
+    Plot histograms of per-sample CER and WER using only pandas + matplotlib,
+    with horizontal lines at 2% and 5% for CER to indicate 'good' and 'acceptable' thresholds.
+    """
+    # Load CSV
+    df = pd.read_csv(csv_path)
+
+    # Calculate CER and WER if not already present
+    if "CER" not in df.columns:
+        df["CER"] = df.apply(lambda row: helpers.compute_cer(eval(row["target"]), eval(row["prediction"])), axis=1)
+    if "WER" not in df.columns:
+        df["WER"] = df.apply(lambda row: helpers.compute_wer(eval(row["target"]), eval(row["prediction"])), axis=1)
+
+    CER_MIN = 0.2
+    CER_MAX = 0.3
+
+    mid_cer_df = df[(df["CER"] >= CER_MIN) & (df["CER"] < CER_MAX)]
+
+    print(f"Found {len(mid_cer_df)} samples with CER between {CER_MIN*100} and {CER_MAX*100}%\n")
+
+    for idx, row in mid_cer_df.iterrows():
+        gt = eval(row["target"])
+        pred = eval(row["prediction"])
+        cer = row["CER"]
+        wer = row["WER"]
+
+        print(f"Sample index: {idx}")
+        print(f"GT   : {helpers.get_normalized_text(gt)}")
+        print(f"Pred : {helpers.get_normalized_text(pred)}")
+        print(f"CER  : {cer:.4f}, WER: {wer:.4f}")
+        print("-" * 50)
+
+    # print total number of samples
+    print(f"Total number of samples: {len(df)}")
+
+    num_below_2_percent = (df["CER"] < 0.02).sum()
+    num_below_6_percent = (df["CER"] < 0.06).sum()
+
+    print(f"Number of samples with CER below 2%: {num_below_2_percent}, which is {(num_below_2_percent / len(df)) * 100:.2f}% of total")
+    print(f"Number of samples with CER below 6%: {num_below_6_percent}, which is {(num_below_6_percent / len(df)) * 100:.2f}% of total")
+
+    num_wer_below_2_percent = (df["WER"] < 0.02).sum()
+    num_wer_below_6_percent = (df["WER"] < 0.06).sum()
+
+    print(f"Number of samples with WER below 2%: {num_wer_below_2_percent}, which is {(num_wer_below_2_percent / len(df)) * 100:.2f}% of total")
+    print(f"Number of samples with WER below 6%: {num_wer_below_6_percent}, which is {(num_wer_below_6_percent / len(df)) * 100:.2f}% of total")
+
+    # Clip values for visualization
+    cer = df["CER"].clip(0, clip_max)
+    wer = df["WER"].clip(0, clip_max)
+
+    # Create subplots
+    fig, axes = plt.subplots(1, 2, figsize=(14, 5), sharey=True)
+
+    # CER histogram
+    counts_cer, bins_cer, patches_cer = axes[0].hist(cer, bins=bins, color="steelblue", edgecolor="black")
+    axes[0].set_title("Per-image CER distribution")
+    axes[0].set_xlabel("CER")
+    axes[0].set_ylabel("Number of images")
+
+    # Add vertical lines at 2% and 6%
+    axes[0].axvline(0.02, color="red", linestyle="--", linewidth=2, label="2% threshold")
+    axes[0].axvline(0.06, color="orange", linestyle="--", linewidth=2, label="6% threshold")
+    axes[0].legend()
+
+    # WER histogram
+    axes[1].hist(wer, bins=bins, color="darkorange", edgecolor="black")
+    axes[1].set_title("Per-image WER distribution")
+    axes[1].set_xlabel("WER")
+
+    # Add vertical lines at 2% and 6%
+    axes[1].axvline(0.02, color="red", linestyle="--", linewidth=2, label="2% threshold")
+    axes[1].axvline(0.06, color="orange", linestyle="--", linewidth=2, label="6% threshold")
+    axes[1].legend()
+
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_fer_histogram(csv_path="ocr_eval_results.csv", bins=50):
+    # Load CSV
+    df = pd.read_csv(csv_path)
+
+    # calculate fer
+
+    df['FER'] = df.apply(lambda row: helpers.compute_fer(eval(row['target']), eval(row['prediction'])), axis=1)
+    # print first target and prediction with their FER
+    print(df[['target', 'prediction', 'FER']].head())
+
+    df['FER'] = df['FER'].clip(0, 1.0)
+
+    # Plot histogram
+    plt.figure(figsize=(10, 6))
+    plt.hist(df['FER'], bins=bins, color='purple', edgecolor='black')
+    plt.title('Per-image FER distribution')
+    plt.xlabel('FER')
+    plt.ylabel('Number of images')
+    plt.grid(True)
+    plt.show()
+
+
 if __name__ == "__main__":
     model_type = "nutris-slim"
     # model_type = "sroie"
     version = ""
 
-    plot_loss(model_type, version)
-    plot_learning_rate(model_type, version)
+    # plot_loss(model_type, version)
+    # plot_learning_rate(model_type, version)
+    plot_cer_and_wer_histogram()
+    plot_fer_histogram()
