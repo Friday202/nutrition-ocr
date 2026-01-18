@@ -3,8 +3,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import predict
 import numpy as np
-
 import re
+
 
 def check_data():
     key_file_path = helpers.get_key_folder_path("nutris")
@@ -68,7 +68,7 @@ def check_df():
     key_file_path = helpers.get_key_folder_path("nutris")
     df = pd.read_excel(key_file_path / "nutris_cleaned.xlsx")
 
-    check_array = ["]]"]
+    check_array = ["(("]
 
     for item in check_array:
         check_containing_in_df(df, item, print_rows=True)
