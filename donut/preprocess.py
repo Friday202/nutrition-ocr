@@ -112,32 +112,36 @@ def split_ingredients(text: str):
     paren_depth = 0
     bracket_depth = 0
 
-    for i, ch in enumerate(text):
-        if ch == '(':
-            paren_depth += 1
-        elif ch == ')':
-            paren_depth = max(0, paren_depth - 1)
-        elif ch == '[':
-            bracket_depth += 1
-        elif ch == ']':
-            bracket_depth = max(0, bracket_depth - 1)
+    try:
+        for i, ch in enumerate(text):
+            if ch == '(':
+                paren_depth += 1
+            elif ch == ')':
+                paren_depth = max(0, paren_depth - 1)
+            elif ch == '[':
+                bracket_depth += 1
+            elif ch == ']':
+                bracket_depth = max(0, bracket_depth - 1)
 
-        # Check for a top-level comma
-        if ch == ',' and paren_depth == 0 and bracket_depth == 0:
-            # Do not split if it's part of a number like 3,4%
-            prev_is_digit = i > 0 and text[i - 1].isdigit()
-            next_is_digit = i + 1 < len(text) and text[i + 1].isdigit()
+            # Check for a top-level comma
+            if ch == ',' and paren_depth == 0 and bracket_depth == 0:
+                # Do not split if it's part of a number like 3,4%
+                prev_is_digit = i > 0 and text[i - 1].isdigit()
+                next_is_digit = i + 1 < len(text) and text[i + 1].isdigit()
 
-            if not (prev_is_digit and next_is_digit):
-                result.append(''.join(current).strip())
-                current = []
-                continue
+                if not (prev_is_digit and next_is_digit):
+                    result.append(''.join(current).strip())
+                    current = []
+                    continue
 
-        current.append(ch)
+            current.append(ch)
 
-    # Add the last chunk
-    if current:
-        result.append(''.join(current).strip())
+        # Add the last chunk
+        if current:
+            result.append(''.join(current).strip())
+    except Exception as e:
+        print(f"[ERROR] Failed to split ingredients for text: {text}. Error: {e}")
+        quit(5)
 
     return result
 
