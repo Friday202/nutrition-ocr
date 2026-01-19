@@ -118,6 +118,13 @@ def get_nutris_train_dataframe():
     key_file_path = get_key_folder_path("nutris")
     xslx_file = key_file_path / "nutris_cleaned_train.xlsx"
     df = pd.read_excel(xslx_file)
+    amount_of_nan = df["Ingredients"].isna().sum()
+    print("Amount of NaN in Ingredients column:", amount_of_nan)
+    df["Ingredients"] = (
+        df["Ingredients"]
+        .fillna("")  # NaN → ""
+        .astype(str)
+    )
     return df
 
 
