@@ -46,11 +46,11 @@ def clean_ground_truth_text(df):
     total_removed = 0
     cleaned_df = df.copy()
 
-    # Convert Ingredients column to string type and check data validity
-    cleaned_df["Ingredients"] = cleaned_df["Ingredients"].astype(str)
-
     assert not cleaned_df["Ingredients"].isnull().any(), "Null values found in Ingredients column"
     assert not cleaned_df["Ingredients"].isna().any(), "NaN values found in Ingredients column"
+
+    # Convert Ingredients column to string type and check data validity
+    cleaned_df["Ingredients"] = cleaned_df["Ingredients"].astype(str)
 
     forbidden = {"nan", "none", "null", "N/A", "n/a", "N.a.", "N.a", ""}
     bad_mask = cleaned_df["Ingredients"].str.lower().isin(forbidden)
