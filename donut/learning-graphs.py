@@ -49,6 +49,19 @@ def plot_loss(model_type, version=''):
     train_epochs, train_vals = filter_valid(epochs, train_loss)
     val_epochs, val_vals = filter_valid(epochs, validation_loss)
 
+    # Print values of validation loss on 2 decimals
+    print("Validation Loss values:")
+    for epoch, val in zip(val_epochs, val_vals):
+        print(f"Epoch {epoch:.2f}: {val:.4f}")
+
+    # print train loss but only every 5th one
+    print("\nTraining Loss values:")
+    amount = 0
+    for epoch, val in zip(train_epochs, train_vals):
+        amount += 1
+        if amount % 5 == 0:
+            print(f"Epoch {epoch:.2f}: {val:.4f}")
+
     # Plotting
     plt.figure(figsize=(10, 6))
 
@@ -107,7 +120,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 
-def plot_cer_and_wer_histogram(csv_path="ocr_eval_results.csv", bins=50, clip_max=1.0):
+def plot_cer_and_wer_histogram(csv_path="ocr_eval_results_test.csv", bins=50, clip_max=1.0):
     """
     Plot histograms of per-sample CER and WER using only pandas + matplotlib,
     with horizontal lines at 2% and 5% for CER to indicate 'good' and 'acceptable' thresholds.
@@ -121,8 +134,8 @@ def plot_cer_and_wer_histogram(csv_path="ocr_eval_results.csv", bins=50, clip_ma
     if "WER" not in df.columns:
         df["WER"] = df.apply(lambda row: helpers.compute_wer(eval(row["target"]), eval(row["prediction"])), axis=1)
 
-    CER_MIN = 0.2
-    CER_MAX = 0.3
+    CER_MIN = 0.5
+    CER_MAX = 0.55
 
     mid_cer_df = df[(df["CER"] >= CER_MIN) & (df["CER"] < CER_MAX)]
 
@@ -145,9 +158,11 @@ def plot_cer_and_wer_histogram(csv_path="ocr_eval_results.csv", bins=50, clip_ma
 
     num_below_2_percent = (df["CER"] < 0.02).sum()
     num_below_6_percent = (df["CER"] < 0.06).sum()
+    num_below_10_percent = (df["CER"] < 0.10).sum()
 
     print(f"Number of samples with CER below 2%: {num_below_2_percent}, which is {(num_below_2_percent / len(df)) * 100:.2f}% of total")
     print(f"Number of samples with CER below 6%: {num_below_6_percent}, which is {(num_below_6_percent / len(df)) * 100:.2f}% of total")
+    print(f"Number of samples with CER below 10%: {num_below_10_percent}, which is {(num_below_10_percent / len(df)) * 100:.2f}% of total")
 
     num_wer_below_2_percent = (df["WER"] < 0.02).sum()
     num_wer_below_6_percent = (df["WER"] < 0.06).sum()
@@ -212,9 +227,9 @@ def plot_fer_histogram(csv_path="ocr_eval_results.csv", bins=50):
 if __name__ == "__main__":
     model_type = "nutris-slim"
     # model_type = "sroie"
-    version = ""
+    version = "checkpoint-24000"
 
     # plot_loss(model_type, version)
     # plot_learning_rate(model_type, version)
     plot_cer_and_wer_histogram()
-    plot_fer_histogram()
+    # plot_fer_histogram()
