@@ -77,6 +77,8 @@ def train(data_type, start_over=False):
 
     training_args = Seq2SeqTrainingArguments(
         output_dir=output_dir,
+        lr_scheduler_type="linear", # default
+        warmup_ratio=0.1,   # 10% warmup
         num_train_epochs=10,  # TOTAL VALUE
         learning_rate=2e-5,
         per_device_train_batch_size=2,
