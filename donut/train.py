@@ -77,9 +77,9 @@ def train(data_type, start_over=False):
 
     training_args = Seq2SeqTrainingArguments(
         output_dir=output_dir,
-        lr_scheduler_type="linear", # default
+        lr_scheduler_type="linear",  # default try "cosine"
         warmup_ratio=0.1,   # 10% warmup
-        num_train_epochs=10,  # TOTAL VALUE
+        num_train_epochs=10,  # TOTAL VALUE, in reality we see no improvement after 5-6 epochs
         learning_rate=2e-5,
         per_device_train_batch_size=2,
         weight_decay=0.01,
@@ -92,6 +92,7 @@ def train(data_type, start_over=False):
         save_steps=2000,
         overwrite_output_dir=False,
         predict_with_generate=True,
+        metric_for_best_model="eval_loss",
         load_best_model_at_end=True
     )
 
