@@ -98,7 +98,12 @@ def train(data_type, start_over=False):
         args=training_args,
         train_dataset=processed_dataset["train"],
         eval_dataset=processed_dataset["validation"],
-        callbacks=[EarlyStoppingCallback(early_stopping_patience=2)]
+        callbacks=[
+            EarlyStoppingCallback(
+                early_stopping_patience=3,
+                early_stopping_threshold=0.01
+            )
+        ]
     )
 
     print("[INFO] Starting training, resuming from checkpoint:", last_checkpoint is not None)
