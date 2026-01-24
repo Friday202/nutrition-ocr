@@ -157,13 +157,22 @@ def parse_ingredients(raw: Union[str, dict]) -> List[str]:
     """
 
     def extract_from_dict(d):
-        if isinstance(d, dict) and "ingredients" in d:
-            return [
-                item.get("text", "").strip()
-                for item in d.get("ingredients", [])
-                if isinstance(item, dict) and "text" in item
-            ]
-        return None
+        if not isinstance(d, dict) or "ingredients" not in d:
+            return None
+
+        ingredients = d["ingredients"]
+
+        if isinstance(ingredients, dict):
+            ingredients = [ingredients]
+
+        if not isinstance(ingredients, list):
+            return None
+
+        return [
+            item.get("text", "").strip()
+            for item in ingredients
+            if isinstance(item, dict) and "text" in item
+        ]
 
     # Case 1: already a dict
     if isinstance(raw, dict):
