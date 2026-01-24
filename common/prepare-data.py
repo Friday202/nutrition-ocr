@@ -60,6 +60,19 @@ def clean_ground_truth_text(df):
     cleaned_df["Ingredients"] = cleaned_df["Ingredients"].str.replace("/", "", regex=False)
     print("Replaced '/' characters in Ingredients column.")
 
+    # Fix spacing issues around parentheses
+    cleaned_df["Ingredients"] = cleaned_df["Ingredients"].str.replace(
+        r'([^\s])\(',
+        r'\1 (',
+        regex=True
+    )
+
+    cleaned_df["Ingredients"] = cleaned_df["Ingredients"].str.replace(
+        r'\)([^\s,])',
+        r') \1',
+        regex=True
+    )
+
     # 1. Remove leading/trailing whitespace and normalize internal whitespace
     cleaned_df["Ingredients"] = (
         cleaned_df["Ingredients"]
