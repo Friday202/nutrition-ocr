@@ -211,7 +211,7 @@ def parse_ingredients(raw: Union[str, dict]) -> List[str]:
 if __name__ == "__main__":
     # Runs prediction on test set from his dataset not arbitrary image
     data_type = "nutris-slim"
-    checkpoint_path = ""
+    checkpoint_path = "/checkpoint-24000"
 
     # Load processor and model, move model to device
     processor = get_processor(data_type)
