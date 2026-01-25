@@ -15,7 +15,7 @@ import common.helpers as helpers
 def create_jsons_from_xslx(key_file_path, is_flat=False, is_slim=False):
     df = helpers.get_nutris_train_dataframe()
 
-    n_slim = 10000  # 5000 - Test only for now
+    n_slim = 5  # 5000 - Test only for now
     n_rows = len(df)
 
     if n_rows <= n_slim or not is_slim:
@@ -295,7 +295,10 @@ def transform_and_tokenize(sample, processor, split="train", max_length=512, ign
     labels = input_ids.clone()
     labels[labels == processor.tokenizer.pad_token_id] = ignore_id
 
-    return {"pixel_values": pixel_values, "labels": labels, "target_sequence": sample["text"]} # Remove PIL image but keep reference to img path as filename
+    # pixel values is a tensor from pil image, labels are tokens, target_sequence is original json string (GT)
+    # i also need filename string for debugging purposes
+    print(sample)
+    return {"pixel_values": pixel_values, "labels": labels, "target_sequence": sample["text"]}
 
 
 def preprocess(dataset_type, debug=False):
@@ -369,3 +372,9 @@ if __name__ == "__main__":
     # data = "sroie"
 
     preprocess(data)
+
+    from predict import get_processed_dataset
+    data = get_processed_dataset(data)
+    # Print what is inside data
+    print(data["train"]["target_sequence"])
+
