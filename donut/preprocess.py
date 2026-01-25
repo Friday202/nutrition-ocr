@@ -212,13 +212,16 @@ def preprocess_documents_for_donut(sample, new_special_tokens, task_start_token,
     text = json.loads(sample["text"])
     d_doc = task_start_token + json2token(text, new_special_tokens) + eos_token
     image = sample["image"].convert("RGB")
-    return {"image": image, "text": d_doc}
+    file_name = sample.get("file_name") or getattr(sample.get("image"), "filename", None)
+    return {"image": image, "text": d_doc, "file_name": file_name}
 
 
 def preprocess_documents_for_donut_batch(batch, new_special_tokens, task_start_token, eos_token):
-    images, texts = [], []
+    images, texts, file_names = [], [], []
 
-    for img, txt in zip(batch["image"], batch["text"]):
+    incoming_names = batch.get("file_name")
+
+    for idx, (img, txt) in enumerate(zip(batch["image"], batch["text"])):
         text_obj = json.loads(txt)
         d_doc = task_start_token + json2token(text_obj, new_special_tokens) + eos_token
         image = img.convert("RGB")
@@ -226,7 +229,13 @@ def preprocess_documents_for_donut_batch(batch, new_special_tokens, task_start_t
         images.append(image)
         texts.append(d_doc)
 
-    return {"image": images, "text": texts}
+        # Prefer file_name column from dataset; fall back to PIL image filename
+        if incoming_names is not None:
+            file_names.append(incoming_names[idx])
+        else:
+            file_names.append(getattr(img, "filename", None))
+
+    return {"image": images, "text": texts, "file_name": file_names}
 
 
 def json2token(obj, new_special_tokens, update_special_tokens_for_json_key=True, sort_json_key=True):
@@ -296,9 +305,13 @@ def transform_and_tokenize(sample, processor, split="train", max_length=512, ign
     labels[labels == processor.tokenizer.pad_token_id] = ignore_id
 
     # pixel values is a tensor from pil image, labels are tokens, target_sequence is original json string (GT)
-    # i also need filename string for debugging purposes
-    print(sample)
-    return {"pixel_values": pixel_values, "labels": labels, "target_sequence": sample["text"]}
+    # file_name is optional, used for debugging / identification
+    return {
+        "pixel_values": pixel_values,
+        "labels": labels,
+        "target_sequence": sample["text"],
+        "file_name": sample.get("file_name") or getattr(sample.get("image"), "filename", None),
+    }
 
 
 def preprocess(dataset_type, debug=False):
@@ -372,9 +385,3 @@ if __name__ == "__main__":
     # data = "sroie"
 
     preprocess(data)
-
-    from predict import get_processed_dataset
-    data = get_processed_dataset(data)
-    # Print what is inside data
-    print(data["train"]["target_sequence"])
-
