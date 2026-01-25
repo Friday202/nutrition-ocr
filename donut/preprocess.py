@@ -231,9 +231,14 @@ def preprocess_documents_for_donut_batch(batch, new_special_tokens, task_start_t
 
         # Prefer file_name column from dataset; fall back to PIL image filename
         if incoming_names is not None:
-            file_names.append(incoming_names[idx])
+            file_name = incoming_names[idx]
+            file_name = Path(file_name).name
+            file_names.append(file_name)
         else:
-            file_names.append(getattr(img, "filename", None))
+            file_name = getattr(img, "filename", None)
+            if file_name is not None:
+                file_name = Path(file_name).name
+            file_names.append(file_name)
 
     return {"image": images, "text": texts, "file_name": file_names}
 
