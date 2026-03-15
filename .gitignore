@@ -193,3 +193,4 @@ tesseract/debug
 results
 latex/
 donut/ocr_eval_results.csv
+nutris_env.sqfs
