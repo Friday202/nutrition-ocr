@@ -7,6 +7,7 @@ import numpy as np
 from pathlib import Path
 import random
 import json
+from functools import partial
 import os
 
 import common.helpers as helpers
@@ -329,6 +330,9 @@ def preprocess(dataset_type, debug=False):
     # Create metadata.jsonl file
     create_json_meta_data_file(data_name=dataset_type, overwrite=True)
 
+    # Determine number of processes for dataset loading
+    num_cpus = int(os.environ.get("SLURM_CPUS_PER_TASK", 1))
+
     # Load dataset
     image_path = helpers.get_img_folder_path(dataset_type)
     dataset = load_dataset("imagefolder", data_dir=image_path, split="train")
@@ -350,6 +354,12 @@ def preprocess(dataset_type, debug=False):
     # proc_dataset = dataset.map (
     #     lambda sample: preprocess_documents_for_donut(sample, new_special_tokens, task_start_token, eos_token)
     # )
+    #preprocess_fn = partial(
+    #    preprocess_documents_for_donut_batch,
+    #    new_special_tokens=new_special_tokens,
+    #    task_start_token=task_start_token,
+    #    eos_token=eos_token
+    #)
 
     proc_dataset = dataset.map(
         lambda batch: preprocess_documents_for_donut_batch(batch, new_special_tokens, task_start_token, eos_token),
@@ -386,7 +396,7 @@ def preprocess(dataset_type, debug=False):
 
 if __name__ == "__main__":
     # "nutris" with optional "-slim" / "-flat" or "sroie", slim is 5000 samples full is 23000 samples
-    data = "nutris-slim"
-    # data = "sroie"
+    # data = "nutris-slim"
+    data = "sroie"
 
     preprocess(data)
