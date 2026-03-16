@@ -219,8 +219,11 @@ def parse_ingredients(raw: Union[str, dict]) -> List[str]:
 
 if __name__ == "__main__":
     # Runs prediction on test set from his dataset not arbitrary image
-    data_type = "nutris-slim"
-    checkpoint_path = "/checkpoint-24000"
+    # data_type = "nutris-slim"
+    # checkpoint_path = "/checkpoint-24000"
+
+    data_type = "sroie"
+    checkpoint_path = ""
 
     # Load processor and model, move model to device
     processor = get_processor(data_type)
@@ -241,8 +244,9 @@ if __name__ == "__main__":
         # Run prediction
         prediction, target = run_prediction(test_sample, model, processor, device)
 
-        target = parse_ingredients(target)
-        prediction = parse_ingredients(prediction)
+        if data_type != "sroie":
+            target = parse_ingredients(target)
+            prediction = parse_ingredients(prediction)
 
         rows.append({
             "prediction": prediction,
@@ -250,4 +254,7 @@ if __name__ == "__main__":
         })
 
     df = pd.DataFrame(rows)
-    df.to_csv("ocr_eval_results.csv", index=False)
+    name = data_type + "_eval_results.csv"
+    df.to_csv(name, index=False)
+    print(f"Saved predictions and targets to {name}")
+

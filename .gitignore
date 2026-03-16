@@ -199,3 +199,4 @@ sroie-dataset/
 sroie-processor/
 # any .out files
 *.out
+sroie-model/
