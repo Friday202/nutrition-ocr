@@ -195,3 +195,7 @@ latex/
 donut/ocr_eval_results.csv
 nutris_env.sqfs
 hf_cache/
+sroie-dataset/
+sroie-processor/
+# any .out files
+*.out
