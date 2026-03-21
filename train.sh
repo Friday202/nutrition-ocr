@@ -1,10 +1,10 @@
 #!/bin/bash
-#SBATCH --job-name=train-sroie
+#SBATCH --job-name=train-nutris
 #SBATCH --partition=frida
-#SBATCH --time=4:00:00
+#SBATCH --time=2:00:00
 #SBATCH --gres=gpu:A100
-#SBATCH --cpus-per-task=4
-#SBATCH --mem=32G
+#SBATCH --cpus-per-task=16
+#SBATCH --mem=128G
 
 export HF_HOME=/shared/workspace/laspp/jakob_petek/nutrition-ocr/hf_cache
 
