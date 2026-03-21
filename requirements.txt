@@ -1,0 +1,10 @@
+transformers==4.29.2
+tokenizers==0.13.3
+datasets==2.14.0
+jiwer
+matplotlib
+sentencepiece
+accelerate
+huggingface_hub==0.14.1
+openpyxl
+fsspec==2023.6.0
