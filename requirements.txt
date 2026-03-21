@@ -10,3 +10,4 @@ openpyxl
 fsspec==2025.9.0
 protobuf<=3.20.3
 pyarrow>=21.0
+Pillow>=9.4.0
