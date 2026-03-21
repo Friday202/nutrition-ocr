@@ -9,4 +9,4 @@ huggingface_hub==0.36.0
 openpyxl
 fsspec==2025.9.0
 protobuf<=3.20.3
-pyarrow<14.0
+pyarrow>=21.0
