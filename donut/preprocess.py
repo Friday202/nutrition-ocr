@@ -188,7 +188,7 @@ def generate_jsons(dataset_type, overwrite=True):
         dataset_type = dataset_type.replace("-flat", "")
 
     is_slim = "slim" in dataset_type
-    if "is_slim":
+    if is_slim:
         dataset_type = dataset_type.replace("-slim", "")
 
     # Remove previous json files if overwrite is True
