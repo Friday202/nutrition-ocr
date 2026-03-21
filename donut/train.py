@@ -104,6 +104,6 @@ def train(data_type, start_over=False):
 
 
 if __name__ == "__main__": 
-    dataset_type = "sroie"
+    dataset_type = "nutris-slim-5000"
 
     train(dataset_type)
