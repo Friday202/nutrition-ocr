@@ -2,7 +2,7 @@ srun -p dev \
   --mem=32G \
   --container-image=nvcr.io#nvidia/pytorch:23.05-py3 \
   --container-save=/shared/workspace/laspp/jakob_petek/nutrition-ocr/nutris_env.sqfs \
-  bash -c 'pip install transformers==4.29.2 tokenizers==0.13.3 datasets==2.14.0 jiwer matplotlib sentencepiece accelerate'
+  bash -c 'pip install transformers==4.29.2 tokenizers==0.13.3 datasets==2.14.0 jiwer matplotlib sentencepiece accelerate huggingface_hub==0.14.1 openpyxl fsspec==2023.6.0'
 
 To update
 
@@ -11,4 +11,4 @@ To update
   --container-image=/shared/workspace/laspp/jakob_petek/nutrition-ocr/nutris_env.sqfs \
   --container-name=nutris_update \
   --container-save=/shared/workspace/laspp/jakob_petek/nutrition-ocr/nutris_env.sqfs \
-  bash -c 'pip install huggingface_hub==0.14.1'
+  bash -c 'pip install fsspec==2023.6.0'
