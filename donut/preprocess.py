@@ -3,6 +3,7 @@ from transformers import DonutProcessor
 
 import pandas as pd
 import numpy as np
+import re
 
 from pathlib import Path
 import random
@@ -13,10 +14,10 @@ import os
 import common.helpers as helpers
 
 
-def create_jsons_from_xslx(key_file_path, is_flat=False, is_slim=False):
+def create_jsons_from_xslx(key_file_path, is_flat=False, is_slim=False, num_samples=5000):
     df = helpers.get_nutris_train_dataframe()
 
-    n_slim = 5  # 5000 - Test only for now
+    n_slim = num_samples
     n_rows = len(df)
 
     if n_rows <= n_slim or not is_slim:
@@ -180,30 +181,29 @@ def create_json_meta_data_file(data_name, overwrite=True):
 
 
 def generate_jsons(dataset_type, overwrite=True):
-    if "nutris" not in dataset_type:
-        return dataset_type  # Nothing to do sroie already has jsons
+    if "sroie" in dataset_type:
+        return "sroie"
 
-    is_flat = "flat" in dataset_type
-    if is_flat:
-        dataset_type = dataset_type.replace("-flat", "")
+    is_flat = "-flat" in dataset_type
+    is_slim = "-slim" in dataset_type
+    num_samples = 5000
 
-    is_slim = "slim" in dataset_type
     if is_slim:
-        dataset_type = dataset_type.replace("-slim", "")
+        # Extract optional number after "-slim-X"
+        match = re.search(r"-slim-(\d+)", dataset_type)
+        if match:
+            num_samples = int(match.group(1))
 
-    # Remove previous json files if overwrite is True
     if overwrite:
-        key_file_path = helpers.get_key_folder_path(dataset_type)
-
+        key_file_path = helpers.get_key_folder_path("nutris")
         for json_file in key_file_path.glob("*.json"):
             os.remove(json_file)
         print(f"[INFO] Removed existing JSON files in '{key_file_path}'.")
-
-        create_jsons_from_xslx(key_file_path, is_flat=is_flat, is_slim=is_slim)
+        create_jsons_from_xslx(key_file_path, is_flat=is_flat, is_slim=is_slim, num_samples=num_samples)
     else:
-        print(f"[INFO] JSON files already exist for '{dataset_type}', skipping generation.")
+        print(f"[INFO] JSON files already exist for 'nutris', skipping generation.")
 
-    return dataset_type
+    return "nutris"
 
 
 def preprocess_documents_for_donut(sample, new_special_tokens, task_start_token, eos_token):
@@ -395,8 +395,8 @@ def preprocess(dataset_type, debug=False):
 
 
 if __name__ == "__main__":
-    # "nutris" with optional "-slim" / "-flat" or "sroie", slim is 5000 samples full is 23000 samples
-    # data = "nutris-slim"
-    data = "sroie"
+    # "sroie" or "nutris"
+    # "nutris" has optionals "-slim-X" / "-flat", where X is number of samples for slim version, default is 5000    
+    data = "nutris-slim-30"
 
     preprocess(data)
