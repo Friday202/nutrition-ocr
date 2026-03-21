@@ -229,11 +229,15 @@ def stratified_length_split(df, text_col="Ingredients", test_size=1000, n_bins=2
 if __name__ == "__main__":
     data_name = "nutris"
 
-    df = get_xslx_dataframe(data_name)
+    df = get_xslx_dataframe(data_name) # initial data (X) ~23k rows
     cleaned_df = clean_ground_truth_text(df)
     train_df, test_df = stratified_length_split(cleaned_df, test_size=1000, n_bins=20, seed=42)
 
-    # Save cleaned dataframe
+    # Nutris cleaned is all initial data stripped and cleaned (X - A, where A is cleaned rows) ~22k rows
     save_xslx_dataframe(cleaned_df, "nutris_cleaned.xlsx", data_name=data_name)
+
+    # Nutris cleaned train is full data used on any model traning (X - A - B, where B is test set) ~21k rows 
     save_xslx_dataframe(train_df, "nutris_cleaned_train.xlsx", data_name=data_name)
+
+    # Nutris cleaned test is common evaluation set (B) ~1k rows
     save_xslx_dataframe(test_df, "nutris_cleaned_test.xlsx", data_name=data_name)
