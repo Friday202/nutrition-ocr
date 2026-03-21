@@ -397,6 +397,6 @@ def preprocess(dataset_type, debug=False):
 if __name__ == "__main__":
     # "sroie" or "nutris"
     # "nutris" has optionals "-slim-X" / "-flat", where X is number of samples for slim version, default is 5000    
-    data = "nutris-slim-30"
+    data = "nutris"
 
     preprocess(data)
