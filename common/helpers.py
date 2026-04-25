@@ -164,11 +164,17 @@ def get_data(data_name="demo"):
 
 
 # Add comon evaluation code, CER, WER, substring recall, char precision etc.
-def normalize(s: str) -> str:
+def normalize2(s: str) -> str:
     s = s.lower()
     s = unicodedata.normalize("NFKD", s)
     s = "".join(c for c in s if not unicodedata.combining(c))
     s = re.sub(r"[^\w\s]", "", s)   # remove punctuation
+    s = re.sub(r"\s+", " ", s).strip()
+    return s
+
+def normalize(s: str) -> str:
+    s = s.lower()
+    s = re.sub(r"[^\w\s]", "", s)
     s = re.sub(r"\s+", " ", s).strip()
     return s
 
@@ -186,7 +192,7 @@ def compute_wer(gt, pred):
 
 
 def compute_cer(gt, pred):
-    gt_text = normalize(_to_text(gt))
+    gt_text = normalize(_to_text(gt))    
     pred_text = normalize(_to_text(pred))
     return cer(gt_text, pred_text)
 
