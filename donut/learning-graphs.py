@@ -134,8 +134,8 @@ def plot_cer_and_wer_histogram(csv_path="ocr_eval_results_test.csv", bins=50, cl
     if "WER" not in df.columns:
         df["WER"] = df.apply(lambda row: helpers.compute_wer(eval(row["target"]), eval(row["prediction"])), axis=1)
 
-    CER_MIN = 0.5
-    CER_MAX = 0.55
+    CER_MIN = 0.9
+    CER_MAX = 1.0
 
     mid_cer_df = df[(df["CER"] >= CER_MIN) & (df["CER"] < CER_MAX)]
 
@@ -144,6 +144,7 @@ def plot_cer_and_wer_histogram(csv_path="ocr_eval_results_test.csv", bins=50, cl
     for idx, row in mid_cer_df.iterrows():
         gt = eval(row["target"])
         pred = eval(row["prediction"])
+        file_name = row["file_name"]
         cer = row["CER"]
         wer = row["WER"]
 
@@ -151,6 +152,7 @@ def plot_cer_and_wer_histogram(csv_path="ocr_eval_results_test.csv", bins=50, cl
         print(f"GT   : {helpers.get_normalized_text(gt)}")
         print(f"Pred : {helpers.get_normalized_text(pred)}")
         print(f"CER  : {cer:.4f}, WER: {wer:.4f}")
+        print(f"File : {file_name}")
         print("-" * 50)
 
     # print total number of samples
@@ -231,5 +233,6 @@ if __name__ == "__main__":
 
     # plot_loss(model_type, version)
     # plot_learning_rate(model_type, version)
-    plot_cer_and_wer_histogram()
+    path = r"C:\Users\Jakob\Downloads\nutris_eval_results.csv"
+    plot_cer_and_wer_histogram(path)
     # plot_fer_histogram()

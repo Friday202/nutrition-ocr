@@ -84,12 +84,14 @@ def run_prediction(sample, model, processor, device, has_target=True):
     prediction = processor.batch_decode(outputs.sequences)[0]
     prediction = processor.token2json(prediction)
 
+    file_name = sample.get("file_name")  
+
     if not has_target:
-        return prediction, None
+        return prediction, None, file_name
 
     # load reference target, dataset has 3 fields for target: "pixel_values" - the image, "labels" - token ids, "target_sequence" - string
     target = processor.token2json(sample["target_sequence"])
-    return prediction, target
+    return prediction, target, file_name
 
 
 def run_prediction_from_image(
@@ -242,7 +244,11 @@ if __name__ == "__main__":
         test_sample = dataset[i]
 
         # Run prediction
-        prediction, target = run_prediction(test_sample, model, processor, device)
+        prediction, target, file_name = run_prediction(test_sample, model, processor, device)
+
+        if i % 10 == 0:
+            print("Sample prediction " + str(i) + ":", prediction)
+            print("Sample target " + str(i) + ":", target)
 
         if data_type != "sroie":
             target = parse_ingredients(target)
@@ -250,7 +256,8 @@ if __name__ == "__main__":
 
         rows.append({
             "prediction": prediction,
-            "target": target
+            "target": target,
+            "file_name": file_name
         })
 
     df = pd.DataFrame(rows)

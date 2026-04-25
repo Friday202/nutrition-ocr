@@ -200,3 +200,6 @@ sroie-processor/
 # any .out files
 *.out
 sroie-model/
+outputs/
+nutris*/
+*.csv

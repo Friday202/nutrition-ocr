@@ -31,4 +31,3 @@ if __name__ == "__main__":
         text = run_prediction(image_path, debug=True)
         print("Extracted Text:", text)
         print("Ground Truth:", ground_truth)
-
