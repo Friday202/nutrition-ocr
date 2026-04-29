@@ -203,3 +203,7 @@ sroie-model/
 outputs/
 nutris*/
 *.csv
+.paddleocr
+.bruh
+paddleocr/data
+paddleocr/output
