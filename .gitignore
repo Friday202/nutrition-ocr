@@ -210,4 +210,5 @@ paddleocr/output
 .venv_paddleocr_vl
 .venv_paddleocr
 paddle_ocr_jsons
+paddle_ocr_jsons_vl
 .*
