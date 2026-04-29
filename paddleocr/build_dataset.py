@@ -16,6 +16,7 @@ import json
 import logging
 from pathlib import Path
 
+
 import pandas as pd
 from tqdm import tqdm
 
@@ -23,25 +24,12 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 log = logging.getLogger(__name__)
 
 
-def extract_ocr_text(result) -> str:
-    """Flatten PaddleOCR predict() result into a single string."""
-    texts = []
-    for res in result:
-        # PaddleOCR v3+ returns objects with .rec_texts
-        if hasattr(res, "rec_texts") and res.rec_texts:
-            texts.extend([t for t in res.rec_texts if t and t.strip()])
-        # fallback: dict-style
-        elif isinstance(res, dict) and "rec_texts" in res:
-            texts.extend([t for t in res["rec_texts"] if t and t.strip()])
-    return " | ".join(texts)
-
-
-def build_dataset(output_path: str, device: str, debug: bool, limit: int | None):
+def build_dataset(output_path: str, device: str, debug: bool, limit: int | None, vl_model: bool = True):
     # ------------------------------------------------------------------ #
     # Lazy import so the script can be inspected without paddleocr/helpers
     # ------------------------------------------------------------------ #
     import common.helpers as helpers
-    from paddleocr import PaddleOCR
+    from paddleocr import PaddleOCR, PaddleOCRVL
 
     df = helpers.get_nutris_train_dataframe()
     log.info(f"Loaded dataframe: {len(df)} rows")
@@ -55,13 +43,20 @@ def build_dataset(output_path: str, device: str, debug: bool, limit: int | None)
     device = "gpu:0"
 
     log.info(f"Loading PaddleOCR (device={device}) ...")
-    ocr = PaddleOCR(use_textline_orientation=True, lang="sl", device=device)
+
+    if vl_model:
+        ocr = PaddleOCRVL()
+    else:
+        ocr = PaddleOCR(use_textline_orientation=True, lang="sl", device=device)
 
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     skipped = 0
     written = 0
+
+    output_dir = Path("./output")
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     with open(output_path, "w", encoding="utf-8") as f:
         for _, row in tqdm(df.iterrows(), total=len(df), desc="OCR"):
@@ -77,30 +72,10 @@ def build_dataset(output_path: str, device: str, debug: bool, limit: int | None)
                 skipped += 1
                 continue
 
-            try:
-                result = ocr.predict(input=image_path)
-                ocr_text = extract_ocr_text(result)
-            except Exception as e:
-                log.warning(f"OCR failed for {image_path}: {e}")
-                skipped += 1
-                continue
-
-            if not ocr_text.strip():
-                log.debug(f"Empty OCR result for {image_path}")
-                skipped += 1
-                continue
-
-            record = {
-                "product_id": int(row["ProductId"]),
-                "barcode": str(row["Barcode"]),
-                "filename": row["FileName"],
-                "ocr_text": ocr_text,
-                "gt_ingredients": str(gt).strip(),
-            }
-
-            f.write(json.dumps(record, ensure_ascii=False) + "\n")
-            written += 1
-
+            result = ocr.predict(input=image_path)
+            for res in result:
+                res.save_to_json(save_path=output_dir)                
+            
     log.info(f"Done. Written: {written}, Skipped: {skipped}")
     log.info(f"Output: {output_path}")
 

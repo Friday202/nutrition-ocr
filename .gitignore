@@ -207,3 +207,5 @@ nutris*/
 .bruh
 paddleocr/data
 paddleocr/output
+.venv_paddleocr_vl
+.venv_paddleocr
