@@ -29,9 +29,9 @@ from peft import LoraConfig, TaskType, get_peft_model
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
-    TrainingArguments,
+    DataCollatorForSeq2Seq,
 )
-from trl import SFTTrainer
+from trl import SFTTrainer, SFTConfig
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
@@ -40,7 +40,7 @@ log = logging.getLogger(__name__)
 # Config — edit these
 # ------------------------------------------------------------------ #
 MODEL_ID = "Qwen/Qwen2.5-1.5B-Instruct"   # swap to 3B if you have VRAM
-DATA_PATH = "data/ocr_gt_pairs.jsonl"
+DATA_PATH = "paddle_ocr_jsons/ocr_results.jsonl"
 OUTPUT_DIR = "models/ocr-corrector"
 MAX_SEQ_LEN = 512
 TRAIN_SPLIT = 0.8
@@ -55,7 +55,7 @@ LORA_CONFIG = LoraConfig(
     target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],  # Qwen2 attention
 )
 
-TRAINING_ARGS = TrainingArguments(
+SFT_ARGS = SFTConfig(
     output_dir=OUTPUT_DIR,
     num_train_epochs=3,
     per_device_train_batch_size=8,
@@ -63,8 +63,8 @@ TRAINING_ARGS = TrainingArguments(
     gradient_accumulation_steps=4,
     learning_rate=2e-4,
     lr_scheduler_type="cosine",
-    warmup_ratio=0.05,
-    evaluation_strategy="steps",
+    warmup_steps=100,
+    eval_strategy="steps",        # 'evaluation_strategy' renamed in newer trl
     eval_steps=200,
     save_strategy="steps",
     save_steps=200,
@@ -74,8 +74,11 @@ TRAINING_ARGS = TrainingArguments(
     bf16=torch.cuda.is_bf16_supported(),
     fp16=not torch.cuda.is_bf16_supported() and torch.cuda.is_available(),
     logging_steps=50,
-    report_to="none",          # swap to "wandb" if you want tracking
+    report_to="none",             # swap to "wandb" if you want tracking
     dataloader_num_workers=4,
+    max_length=MAX_SEQ_LEN,   # moved here from SFTTrainer
+    dataset_text_field="text",    # moved here from SFTTrainer
+    packing=False,
 )
 
 
@@ -163,12 +166,11 @@ def main():
 
     trainer = SFTTrainer(
         model=model,
-        args=TRAINING_ARGS,
+        args=SFT_ARGS,
         train_dataset=train_dataset,
         eval_dataset=val_dataset,
-        tokenizer=tokenizer,
-        dataset_text_field="text",
-        max_seq_length=MAX_SEQ_LEN,
+        processing_class=tokenizer,
+        # data_collator=DataCollatorForSeq2Seq(tokenizer=tokenizer, padding=True),
     )
 
     log.info("Starting training ...")

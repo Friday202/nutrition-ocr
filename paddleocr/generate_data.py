@@ -45,8 +45,7 @@ if __name__ == "__main__":
                 else:
                     raise ValueError(f"Key {key} not found in DataFrame.")
                 
-                ocr_text = extract_ocr_text(data)               
-                print(f"OCR Text: {ocr_text}")
+                ocr_text = extract_ocr_text(data)                               
 
                 record = {                   
                     "filename": key,
