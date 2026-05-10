@@ -8,6 +8,10 @@ import common.helpers as helpers
 import pandas as pd
 from tqdm import tqdm
 
+"""
+Scipt for generating a jsonl from jsons. 
+"""
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
 

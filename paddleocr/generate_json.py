@@ -17,7 +17,7 @@ import pandas as pd
 # ) # Switch to PP-OCRv5_mobile models
 
 """
-Runs the paddle ocr over train dataframe
+Runs the paddle ocr over train dataframe generating json for every image. 
 """
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
