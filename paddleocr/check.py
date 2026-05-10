@@ -27,7 +27,7 @@ except ImportError:
 
 # ─── Config ───────────────────────────────────────────────────────────────────
 
-DATA_PATH = "paddle_ocr_jsons/ocr_results.jsonl"
+DATA_PATH = "paddle_ocr_jsons_test/ocr_results.jsonl"
 OUTPUT_CSV = "ocr_quality_results.csv"
 
 THRESHOLD_USABLE  = 0.6   # token recall above this → "usable"
