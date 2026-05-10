@@ -214,3 +214,4 @@ paddle_ocr_jsons_vl
 models/*
 .*
 paddleocr/tet.py
+paddle_ocr*

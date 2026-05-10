@@ -18,6 +18,7 @@ import pandas as pd
 
 """
 Runs the paddle ocr over train dataframe generating json for every image. 
+EDit thsi file as preprocessing. 
 """
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -41,21 +42,24 @@ if __name__ == "__main__":
 
     log.info(f"Loading PaddleOCR (device={device}) ...")   
 
-    output_dir = Path("./paddle_ocr_jsons")
+    output_dir = Path("./paddle_ocr_jsons_test")
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    for _, row in tqdm(df.iterrows(), total=len(df), desc="OCR"):
+    sample_df = df.sample(n=min(250, len(df)), random_state=42)
+
+    for _, row in tqdm(sample_df.iterrows(), total=len(sample_df), desc="OCR"):
         image_path = str(base_path / row["FileName"])
 
         if not Path(image_path).exists():
-            log.warning(f"Image not found, skipping: {image_path}")            
+            log.warning(f"Image not found, skipping: {image_path}")
             continue
 
         gt = row["Ingredients"]
-        if pd.isna(gt) or not str(gt).strip():            
+        if pd.isna(gt) or not str(gt).strip():
             continue
 
         result = ocr.predict(input=image_path)
+
         for res in result:
             res.save_to_json(save_path=output_dir)                
             

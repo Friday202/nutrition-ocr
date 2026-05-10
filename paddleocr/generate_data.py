@@ -23,7 +23,7 @@ def extract_ocr_text(result) -> str:
 
 if __name__ == "__main__":
     json_name = "ocr_results.jsonl"
-    output_path = "paddle_ocr_jsons"
+    output_path = "paddle_ocr_jsons_test"
 
     jsonl_file_path = Path(output_path) / json_name    
 
