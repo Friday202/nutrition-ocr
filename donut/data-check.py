@@ -6,7 +6,7 @@ import numpy as np
 import re
 
 """
-Internal check of data. Not actually used normally.
+Internal check of data. Not actually used normally. Just for donut to check model capcabitites. 
 """
 
 

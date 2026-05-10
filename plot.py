@@ -4,6 +4,9 @@ import json
 import pandas as pd
 import common.helpers as helpers
 
+"""
+Script is used to plot results from traning (qwen and donut)
+"""
 
 def plot_loss(model_type, version=''):
     if version:
@@ -114,11 +117,6 @@ def plot_learning_rate(model_type, version=''):
     plt.ylabel('Learning Rate')
     plt.grid(True)
     plt.show()
-
-
-import pandas as pd
-import matplotlib.pyplot as plt
-
 
 def plot_cer_and_wer_histogram(csv_path="ocr_eval_results_test.csv", bins=50, clip_max=1.0):
     """
