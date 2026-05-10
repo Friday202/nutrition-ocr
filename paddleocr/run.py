@@ -14,8 +14,8 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 # ------------------------------------------------------------------ #
 # Config
 # ------------------------------------------------------------------ #
-BASE_MODEL_ID = "Qwen/Qwen2.5-1.5B-Instruct"
-MODEL_DIR     = "models/ocr-corrector"
+BASE_MODEL_ID = "Qwen/Qwen2.5-3B-Instruct"
+MODEL_DIR     = "models/ocr-corrector/checkpoint-600"   # path to the finetuned model (change if needed)
 TEST_DATA     = "paddle_ocr_jsons/internal_test.jsonl"
 BATCH_SIZE    = 8
 MAX_NEW_TOKENS = 256
@@ -97,6 +97,7 @@ def run_batch(batch_records: list) -> list[str]:
 # ------------------------------------------------------------------ #
 all_predictions = []
 
+"""
 for i in range(0, len(records), BATCH_SIZE):
     batch = records[i: i + BATCH_SIZE]
     preds = run_batch(batch)
@@ -110,3 +111,34 @@ for i in range(0, len(records), BATCH_SIZE):
         print(f"GT   : {rec['gt_ingredients']}")
 
 print(f"\nDone. {len(all_predictions)} predictions total.")
+"""
+
+import csv
+
+output_file = "results.csv"
+
+with open(output_file, mode="w", newline="", encoding="utf-8") as f:
+    writer = csv.writer(f)
+    writer.writerow(["filename", "prediction", "ground_truth"])  # header
+
+    for i in range(0, len(records), BATCH_SIZE):
+        batch = records[i: i + BATCH_SIZE]
+        preds = run_batch(batch)
+        all_predictions.extend(preds)
+
+        for rec, pred in zip(batch, preds):
+            writer.writerow([
+                rec["filename"],
+                pred,
+                rec["gt_ingredients"]
+            ])
+
+            # optional: keep your prints
+            print(f"{'='*70}")
+            print(f"FILE : {rec['filename']}")
+            print(f"OCR  : {rec['ocr_text'][:200]}{'...' if len(rec['ocr_text']) > 200 else ''}")
+            print(f"PRED : {pred}")
+            print(f"GT   : {rec['gt_ingredients']}")
+
+print(f"\nDone. {len(all_predictions)} predictions total.")
+print(f"Saved to {output_file}")

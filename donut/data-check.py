@@ -5,6 +5,10 @@ import predict
 import numpy as np
 import re
 
+"""
+Internal check of data. Not actually used normally.
+"""
+
 
 def check_data():
     key_file_path = helpers.get_key_folder_path("nutris")

@@ -39,7 +39,7 @@ log = logging.getLogger(__name__)
 # ------------------------------------------------------------------ #
 # Config — edit these
 # ------------------------------------------------------------------ #
-MODEL_ID = "Qwen/Qwen2.5-1.5B-Instruct"   # swap to 3B if you have VRAM
+MODEL_ID = "Qwen/Qwen2.5-3B-Instruct"   # swap to 3B if you have VRAM
 DATA_PATH = "paddle_ocr_jsons/ocr_results.jsonl"
 OUTPUT_DIR = "models/ocr-corrector"
 MAX_SEQ_LEN = 512
@@ -57,7 +57,7 @@ LORA_CONFIG = LoraConfig(
 
 SFT_ARGS = SFTConfig(
     output_dir=OUTPUT_DIR,
-    num_train_epochs=3,
+    num_train_epochs=2,
     per_device_train_batch_size=8,
     per_device_eval_batch_size=8,
     gradient_accumulation_steps=4,
@@ -186,20 +186,3 @@ if __name__ == "__main__":
     main()
 
 
-# ------------------------------------------------------------------ #
-# SLURM template — save as slurm_finetune.sh
-# ------------------------------------------------------------------ #
-"""
-#!/bin/bash
-#SBATCH --job-name=ocr-corrector
-#SBATCH --nodes=1
-#SBATCH --ntasks=1
-#SBATCH --cpus-per-task=8
-#SBATCH --gres=gpu:1
-#SBATCH --mem=32G
-#SBATCH --time=04:00:00
-#SBATCH --output=logs/finetune_%j.log
-
-source activate your_env
-python finetune.py
-"""

@@ -1,4 +1,4 @@
-# the final scrip to coampre vision OCR vs segmentation OCR on 1k common samples
+# the final script to compare vision OCR vs segmentation OCR on 1k common samples
 # each method paddleOCR and DOnut create their own .csv files 
 import common.helpers as helpers
 
