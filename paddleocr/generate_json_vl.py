@@ -6,25 +6,27 @@ from pathlib import Path
 import pandas as pd
 
 """
-Runs the paddle ocr vl over train dataframe
+Runs the paddle ocr vl over test dataframe
 """
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
 
 if __name__ == "__main__":
-    ocr = PaddleOCRVL()   
+     
 
-    df = helpers.get_nutris_train_dataframe()
+    df = helpers.get_nutris_test_dataframe()
     log.info(f"Loaded dataframe: {len(df)} rows")
 
     base_path = helpers.get_img_folder_path("nutris")
 
     device = "gpu"
 
+    ocr = PaddleOCRVL(device=device)  
+
     log.info(f"Loading PaddleOCR (device={device}) ...")   
 
-    output_dir = Path("./paddle_ocr_jsons_vl")
+    output_dir = Path("./paddle_ocr_jsons_vl_chat")
     output_dir.mkdir(parents=True, exist_ok=True)
 
     for _, row in tqdm(df.iterrows(), total=len(df), desc="OCR"):
@@ -38,7 +40,7 @@ if __name__ == "__main__":
         if pd.isna(gt) or not str(gt).strip():            
             continue
 
-        result = ocr.predict(input=image_path)
+        result = ocr.predict(input=image_path, prompt_label="Find the ingredients section on this Slovenian food label. Return only the ingredients list text, nothing else.", use_layout_detection=False)        
         for res in result:
             res.save_to_json(save_path=output_dir)                
             

@@ -57,29 +57,31 @@ LORA_CONFIG = LoraConfig(
 
 SFT_ARGS = SFTConfig(
     output_dir=OUTPUT_DIR,
-    num_train_epochs=2,
-    per_device_train_batch_size=8,
+    num_train_epochs=5,
+    per_device_train_batch_size=4,
     per_device_eval_batch_size=8,
-    gradient_accumulation_steps=4,
-    learning_rate=2e-4,
-    lr_scheduler_type="cosine",
-    warmup_steps=100,
-    eval_strategy="steps",        # 'evaluation_strategy' renamed in newer trl
-    eval_steps=200,
-    save_strategy="steps",
-    save_steps=200,
+    #gradient_accumulation_steps=4,
+    learning_rate=1e-4,
+    #lr_scheduler_type="cosine",
+    #warmup_steps=2,
+    eval_strategy="epoch",        # 'evaluation_strategy' renamed in newer trl
+    #eval_steps=1000,
+    save_strategy="epoch",
+    #save_steps=10,
     save_total_limit=2,
     load_best_model_at_end=True,
-    metric_for_best_model="eval_loss",
+    #metric_for_best_model="eval_loss",
     bf16=torch.cuda.is_bf16_supported(),
     fp16=not torch.cuda.is_bf16_supported() and torch.cuda.is_available(),
-    logging_steps=50,
+    logging_steps=10,
     report_to="none",             # swap to "wandb" if you want tracking
     dataloader_num_workers=4,
     max_length=MAX_SEQ_LEN,   # moved here from SFTTrainer
     dataset_text_field="text",    # moved here from SFTTrainer
     packing=False,
 )
+
+tokenizer = None
 
 
 # ------------------------------------------------------------------ #
@@ -107,11 +109,30 @@ def make_full_example(ocr_text: str, gt_ingredients: str) -> str:
 # ------------------------------------------------------------------ #
 # Data loading
 # ------------------------------------------------------------------ #
-def load_data(path: str):
+def tokenize_and_mask(example, tokenizer, max_len=512):
+    prompt = make_prompt(example["ocr_text"])
+    completion = example["gt_ingredients"] + "<|im_end|>"
+
+    prompt_ids = tokenizer(prompt, add_special_tokens=False)["input_ids"]
+    full_ids   = tokenizer(prompt + completion, add_special_tokens=False,
+                           max_length=max_len, truncation=True)["input_ids"]
+
+    labels = [-100] * len(prompt_ids) + full_ids[len(prompt_ids):]
+    # If truncated, labels must match input length
+    labels = labels[:len(full_ids)]
+
+    return {"input_ids": full_ids, "attention_mask": [1]*len(full_ids), "labels": labels}
+
+def load_data(path: str, limit: int | None = None):
     records = []
+
     with open(path, encoding="utf-8") as f:
-        for line in f:
+        for i, line in enumerate(f):
+            if limit is not None and i >= limit:
+                break
+
             line = line.strip()
+
             if line:
                 records.append(json.loads(line))
 
@@ -135,10 +156,20 @@ def load_data(path: str):
             f.write(json.dumps(r, ensure_ascii=False) + "\n")
     log.info(f"Internal test set saved to {test_path}")
 
-    def to_hf_dataset(records):
+    def to_hf_dataset2(records):
         return Dataset.from_dict({
             "text": [make_full_example(r["ocr_text"], r["gt_ingredients"]) for r in records]
         })
+    
+    def to_hf_dataset(records):
+        raw = Dataset.from_dict({
+            "ocr_text":       [r["ocr_text"]       for r in records],
+            "gt_ingredients": [r["gt_ingredients"] for r in records],
+        })
+        return raw.map(
+            lambda ex: tokenize_and_mask(ex, tokenizer),
+            remove_columns=["ocr_text", "gt_ingredients"],
+        )
 
     return to_hf_dataset(train), to_hf_dataset(val)
 
@@ -147,6 +178,7 @@ def load_data(path: str):
 # Main
 # ------------------------------------------------------------------ #
 def main():
+    global tokenizer
     log.info(f"Loading model: {MODEL_ID}")
     tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, trust_remote_code=True)
     tokenizer.pad_token = tokenizer.eos_token
@@ -162,8 +194,9 @@ def main():
     model = get_peft_model(model, LORA_CONFIG)
     model.print_trainable_parameters()
 
-    train_dataset, val_dataset = load_data(DATA_PATH)
+    train_dataset, val_dataset = load_data(DATA_PATH, limit=2000)
 
+    """
     trainer = SFTTrainer(
         model=model,
         args=SFT_ARGS,
@@ -171,6 +204,16 @@ def main():
         eval_dataset=val_dataset,
         processing_class=tokenizer,
         # data_collator=DataCollatorForSeq2Seq(tokenizer=tokenizer, padding=True),
+    )
+    """
+
+    trainer = SFTTrainer(
+        model=model,
+        args=SFT_ARGS,
+        train_dataset=train_dataset,
+        eval_dataset=val_dataset,
+        processing_class=tokenizer,
+        data_collator=DataCollatorForSeq2Seq(tokenizer, pad_to_multiple_of=8, label_pad_token_id=-100),
     )
 
     log.info("Starting training ...")

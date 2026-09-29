@@ -217,10 +217,11 @@ def stratified_length_split(df, text_col="Ingredients", test_size=1000, n_bins=2
         plt.figure(figsize=(10, 6))
         plt.hist(train_lens, bins=bins, alpha=0.5, label="Train", density=True)
         plt.hist(test_lens, bins=bins, alpha=0.5, label="Test", density=True)
-        plt.xlabel("Length of Ingredients String")
-        plt.ylabel("Density")
-        plt.title("Length Distribution of Ingredients in Train and Test Sets")
-        plt.legend()
+        plt.yscale("log")
+        plt.xlabel("Dolžina niza sestavin (znaki)")
+        plt.ylabel("Verjetnostna gostota (1/znak)")
+        plt.title("Porazdelitev dolžine nizov sestavin")
+        plt.legend(["Učna množica", "Testna množica"])
         plt.show()
 
     return train_df, test_df
@@ -231,7 +232,9 @@ if __name__ == "__main__":
 
     df = get_xslx_dataframe(data_name) # initial data (X) ~23k rows
     cleaned_df = clean_ground_truth_text(df)
-    train_df, test_df = stratified_length_split(cleaned_df, test_size=1000, n_bins=20, seed=42)
+    train_df, test_df = stratified_length_split(cleaned_df, test_size=1000, n_bins=20, seed=42, show_plot=True)
+
+    exit() 
 
     # Nutris cleaned is all initial data stripped and cleaned (X - A, where A is cleaned rows) ~22k rows
     save_xslx_dataframe(cleaned_df, "nutris_cleaned.xlsx", data_name=data_name)

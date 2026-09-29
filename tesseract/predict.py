@@ -3,9 +3,10 @@ import pytesseract
 import os
 
 from common.helpers import create_folder, get_data
+import common.helpers as helpers
 
 
-def preprocess(image, debug=False):
+def preprocess_(image, debug=False):
     if isinstance(image, str):
         image = cv2.imread(image)
 
@@ -20,7 +21,7 @@ def preprocess(image, debug=False):
     scale_percent = 200  # 200% size
     width = int(image.shape[1] * scale_percent / 100)
     height = int(image.shape[0] * scale_percent / 100)
-    image = cv2.resize(image, (width, height), interpolation=cv2.INTER_LINEAR)
+    image = cv2.resize(image, (width, height), interpolation=cv2.INTER_CUBIC)
 
     # Convert to grayscale
     image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -37,10 +38,10 @@ def preprocess(image, debug=False):
     #        cv2.imwrite(f"debug/{step}_inverted.jpg", image)
 
     # Blur the image to reduce noise
-    image = cv2.medianBlur(image, 5)
-    if debug:
-        step += 1
-        cv2.imwrite(f"debug/{step}_blurred.jpg", image)
+    #image = cv2.medianBlur(image, 5)
+    #if debug:
+    #    step += 1
+    #    cv2.imwrite(f"debug/{step}_blurred.jpg", image)
 
     # Apply adaptive thresholding (better for uneven lighting)
     image = cv2.adaptiveThreshold(
@@ -86,21 +87,28 @@ def show_bounding_box(ocr_data, img):
     cv2.imwrite(f"debug/bounding_boxes.jpg", image)
 
 
-def run_prediction(image, debug=False, config=None):  # Either image path or image array
+def run_prediction(image, preprocess=True, debug=False, config=None):  # Either image path or image array
     if debug:
         create_folder("debug", flush=True, parent_path="")
 
-    pre_processed_image = preprocess(image, debug)
+    if preprocess:
+        pre_processed_image = preprocess_(image, debug)
+    else:
+        pre_processed_image = cv2.imread(image) if isinstance(image, str) else image
 
     if config is None:
-        config = r'--oem 2 --psm 6 -c preserve_interword_spaces=1 -c tessedit_write_images=true'
+        config = r'--oem 1 --psm 6 -c preserve_interword_spaces=0 -c tessedit_write_images=true'
 
-    ocr_data = pytesseract.image_to_data(
-        pre_processed_image,
-        lang="slv",
-        config=config,
-        output_type=pytesseract.Output.DATAFRAME
-    )
+    try:
+        ocr_data = pytesseract.image_to_data(
+            pre_processed_image,
+            lang="slv",
+            config=config,
+            output_type=pytesseract.Output.DATAFRAME
+        )
+    except Exception as e:
+        print(f"Error during OCR processing: {e}")
+        return ""
 
     if debug:
         show_bounding_box(ocr_data, pre_processed_image)
@@ -109,9 +117,25 @@ def run_prediction(image, debug=False, config=None):  # Either image path or ima
 
 
 def postprocess(ocr_data):
-    ocr_data = ocr_data[ocr_data["text"].notnull() & (ocr_data["text"].str.strip() != "")]
-    ocr_data = ocr_data[ocr_data["conf"] > 30]  # Filter out low-confidence results
-    ocr_text = " ".join(ocr_data["text"].tolist())
+    # Ensure text is treated safely as string
+    text = ocr_data["text"]
+
+    # Convert everything to string, but keep NaNs separate first
+    mask_valid = text.notnull()
+
+    # Only apply .str operations on valid rows
+    clean_text = text[mask_valid].astype(str)
+
+    mask_non_empty = clean_text.str.strip() != ""
+
+    # Combine masks correctly
+    ocr_data = ocr_data[mask_valid].copy()
+    ocr_data = ocr_data.loc[mask_non_empty.index[mask_non_empty]]
+
+    # Confidence filter (safe)
+    ocr_data = ocr_data[ocr_data["conf"] > 30]
+
+    ocr_text = " ".join(ocr_data["text"].astype(str).tolist())
 
     return ocr_text
 
@@ -124,17 +148,58 @@ def set_tesseract_path(tesseract_path="C:\\Program Files\\Tesseract-OCR\\tessera
 
     pytesseract.pytesseract.tesseract_cmd = tesseract_path
 
+import tqdm
+# improt path
+from pathlib import Path
+import pandas as pd
+import json 
 
 if __name__ == "__main__":
     # Run this if you want on a single image for testing
     set_tesseract_path()
 
-    img = "003.jpg"
+    img = "007.jpg"
 
     for image_path, ground_truth in get_data("demo"):
         if os.path.basename(image_path) != img:
             continue
-
-        text = run_prediction(image_path, debug=True)
+    
+        text = run_prediction(image_path, preprocess=False, debug=True)
         print("Extracted Text:", text)
         print("Ground Truth:", ground_truth)
+
+    exit(0)
+    
+    out_path = Path("ocr_results.jsonl")
+
+    df = helpers.get_nutris_test_dataframe()
+    print(f"Loaded dataframe: {len(df)} rows")
+
+    base_path = helpers.get_img_folder_path("nutris")
+    print(f"Base image path: {base_path}")    
+
+    with out_path.open("a", encoding="utf-8") as f:
+        for _, row in tqdm.tqdm(df.iterrows(), total=len(df), desc="OCR"):
+           
+            image_path = str(base_path / row["FileName"])
+
+            if not Path(image_path).exists():
+                print(f"Image not found, skipping: {image_path}")
+                continue
+
+            gt = row["Ingredients"]
+            if pd.isna(gt) or not str(gt).strip():
+                print(f"Ground truth is empty, skipping: {image_path}")        
+                continue
+
+            prediction = run_prediction(image_path, preprocess=True, debug=False)
+            record = {
+                "image_path": image_path,
+                "ground_truth": gt,
+                "prediction": prediction
+            }
+            f.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+
+
+

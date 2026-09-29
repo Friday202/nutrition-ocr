@@ -330,6 +330,9 @@ def preprocess(dataset_type, debug=False):
     # Create metadata.jsonl file
     create_json_meta_data_file(data_name=dataset_type, overwrite=True)
 
+    print("DONE generating JSON files and metadata.jsonl file.")
+    quit(0)  # Exit after generating JSON files and metadata.jsonl
+
     # Determine number of processes for dataset loading
     num_cpus = int(os.environ.get("SLURM_CPUS_PER_TASK", 1))
 
@@ -397,6 +400,6 @@ def preprocess(dataset_type, debug=False):
 if __name__ == "__main__":
     # "sroie" or "nutris"
     # "nutris" has optionals "-slim-X" / "-flat", where X is number of samples for slim version, default is 5000    
-    data = "nutris"
+    data = "nutris-slim-3000"
 
     preprocess(data)

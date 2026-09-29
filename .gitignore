@@ -215,3 +215,12 @@ models/*
 .*
 paddleocr/tet.py
 paddle_ocr*
+
+ocr_eval_results.json
+porazdelitev_dolzine_pozivov.png
+*.png
+*.jpg
+tesseract_results/*
+eval_results/*
+*.txt
+internal_test.jsonl

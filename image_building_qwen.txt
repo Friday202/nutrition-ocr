@@ -1,0 +1,24 @@
+To create:
+
+srun -p dev \
+  --mem=32G \
+  --container-image=nvcr.io#nvidia/pytorch:24.05-py3 \
+  --container-save=/shared/workspace/laspp/jakob_petek/nutrition-ocr/qwen_env.sqfs \
+  bash -c 'pip install "transformers==4.45.0" "accelerate>=0.26.0" '
+
+To update:
+
+  srun -p dev \
+  --mem=32G \
+  --container-image=/shared/workspace/laspp/jakob_petek/nutrition-ocr/qwen_env.sqfs \
+  --container-name=qwen_update \
+  --container-save=/shared/workspace/laspp/jakob_petek/nutrition-ocr/qwen_env.sqfs \
+  bash -c 'pip install "Pillow>=9.4.0"'
+
+
+  srun -p dev \
+  --mem=32G \ 
+  --container-image=/shared/workspace/laspp/jakob_petek/nutrition-ocr/qwen_env.sqfs \
+  --container-name=qwen_update \
+  --container-save=/shared/workspace/laspp/jakob_petek/nutrition-ocr/qwen3_env.sqfs \
+  bash -c 'pip install "transformers>=4.51.0" "accelerate>=0.26.0"'

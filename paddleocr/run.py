@@ -15,7 +15,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 # Config
 # ------------------------------------------------------------------ #
 BASE_MODEL_ID = "Qwen/Qwen2.5-3B-Instruct"
-MODEL_DIR     = "models/ocr-corrector/checkpoint-600"   # path to the finetuned model (change if needed)
+MODEL_DIR     = "models/ocr-corrector/checkpoint-2000"   # path to the finetuned model (change if needed)
 TEST_DATA     = "paddle_ocr_jsons/internal_test.jsonl"
 BATCH_SIZE    = 8
 MAX_NEW_TOKENS = 256
@@ -135,8 +135,8 @@ with open(output_file, mode="w", newline="", encoding="utf-8") as f:
 
             # optional: keep your prints
             print(f"{'='*70}")
-            print(f"FILE : {rec['filename']}")
-            print(f"OCR  : {rec['ocr_text'][:200]}{'...' if len(rec['ocr_text']) > 200 else ''}")
+            #print(f"FILE : {rec['filename']}")
+            #print(f"OCR  : {rec['ocr_text'][:200]}{'...' if len(rec['ocr_text']) > 200 else ''}")
             print(f"PRED : {pred}")
             print(f"GT   : {rec['gt_ingredients']}")
 
