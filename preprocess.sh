@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --job-name=nutris_preprocess
-#SBATCH --time=7:00:00
+#SBATCH --time=24:00:00
 #SBATCH --partition=frida
 #SBATCH --cpus-per-task=8
-#SBATCH --mem=64G
+#SBATCH --mem=128G
 
 export HF_HOME=/shared/workspace/laspp/jakob_petek/nutrition-ocr/hf_cache
 

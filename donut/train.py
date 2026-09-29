@@ -68,17 +68,17 @@ def train(data_type, start_over=False):
         num_train_epochs=10,  # TOTAL VALUE, in reality we see no improvement after 5-6 epochs
         learning_rate=5e-5,
         per_device_train_batch_size=16,
-        gradient_accumulation_steps=8,
+        gradient_accumulation_steps=1,
         weight_decay=0.01,
         fp16=True,
         gradient_checkpointing=True, 
-        dataloader_num_workers=4, 
+        dataloader_num_workers=16, 
         logging_steps=100,
         save_total_limit=10,
-        evaluation_strategy="steps",
-        eval_steps=2000,
-        save_strategy="steps",
-        save_steps=2000,
+        evaluation_strategy="epoch",
+        #eval_steps=2000,
+        save_strategy="epoch",
+        #save_steps=2000,
         overwrite_output_dir=False,
         predict_with_generate=True,
         metric_for_best_model="eval_loss",
@@ -93,7 +93,7 @@ def train(data_type, start_over=False):
         callbacks=[
             EarlyStoppingCallback(
                 early_stopping_patience=3,
-                early_stopping_threshold=0.01
+                early_stopping_threshold=0.0
             )
         ]
     )
@@ -107,6 +107,6 @@ def train(data_type, start_over=False):
 
 
 if __name__ == "__main__": 
-    dataset_type = "nutris-slim-5000"
+    dataset_type = "nutris-slim-10000"
 
     train(dataset_type)

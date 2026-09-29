@@ -93,6 +93,41 @@ def run_prediction(sample, model, processor, device, has_target=True):
     target = processor.token2json(sample["target_sequence"])
     return prediction, target, file_name
 
+def run_prediction_batch(samples, model, processor, device, has_target=True):
+    # Stack pixel values into a batch
+    pixel_values = torch.stack([
+        torch.tensor(s["pixel_values"]) for s in samples
+    ]).to(device)
+
+    task_prompt = "<s>"
+    decoder_input_ids = processor.tokenizer(
+        task_prompt, add_special_tokens=False, return_tensors="pt"
+    ).input_ids.to(device)
+
+    # Repeat decoder_input_ids for each item in the batch
+    decoder_input_ids = decoder_input_ids.repeat(len(samples), 1)
+
+    outputs = model.generate(
+        pixel_values,
+        decoder_input_ids=decoder_input_ids,
+        max_length=model.decoder.config.max_position_embeddings,
+        early_stopping=True,
+        pad_token_id=processor.tokenizer.pad_token_id,
+        eos_token_id=processor.tokenizer.eos_token_id,
+        use_cache=True,
+        num_beams=1,
+        bad_words_ids=[[processor.tokenizer.unk_token_id]],
+        return_dict_in_generate=True,
+    )
+
+    results = []
+    predictions = processor.batch_decode(outputs.sequences)
+    for i, sample in enumerate(samples):
+        prediction = processor.token2json(predictions[i])
+        file_name = sample.get("file_name")
+        target = processor.token2json(sample["target_sequence"]) if has_target else None
+        results.append((prediction, target, file_name))
+    return results
 
 def run_prediction_from_image(
     image_path,
@@ -218,13 +253,15 @@ def parse_ingredients(raw: Union[str, dict]) -> List[str]:
     # Final fallback
     return [str(raw)]
 
-
+import os 
 if __name__ == "__main__":
     # Runs prediction on test set from his dataset not arbitrary image
     # data_type = "nutris-slim"
     # checkpoint_path = "/checkpoint-24000"
 
-    data_type = "sroie"
+    #data_type = "nutris-slim-10000"
+    data_type = "nutris-flat-original-size"
+
     checkpoint_path = ""
 
     # Load processor and model, move model to device
@@ -236,29 +273,67 @@ if __name__ == "__main__":
     model.to(device)
 
     rows = []
+    BATCH_SIZE = 0
 
-    # Grab the first sample from the processed test section of dataset
-    dataset = get_processed_dataset(data_type)["test"]
-    for i in range(len(dataset)):
-        print("Processing sample", i + 1, "of", len(dataset))
-        test_sample = dataset[i]
+    data_type = "final_test"  
 
-        # Run prediction
-        prediction, target, file_name = run_prediction(test_sample, model, processor, device)
+    if data_type == "final_test":
+        # Load from paddle_ocr_best_test.jsonl
+        import json 
+        with open("paddle_ocr_best_test.jsonl", "r", encoding="utf-8") as f:
+            dataset = [json.loads(line) for line in f]
+    else:
+        # Grab the first sample from the processed test section of dataset
+        dataset = get_processed_dataset(data_type)["test"]
 
-        if i % 10 == 0:
-            print("Sample prediction " + str(i) + ":", prediction)
-            print("Sample target " + str(i) + ":", target)
+    if BATCH_SIZE > 1:
+        print(f"Running batch prediction with batch size {BATCH_SIZE}...")
+        for batch_start in range(0, len(dataset), BATCH_SIZE):
+            batch = [dataset[i] for i in range(batch_start, min(batch_start + BATCH_SIZE, len(dataset)))]
+            print(f"Processing samples {batch_start + 1}–{batch_start + len(batch)} of {len(dataset)}")
 
-        if data_type != "sroie":
-            target = parse_ingredients(target)
-            prediction = parse_ingredients(prediction)
+            results = run_prediction_batch(batch, model, processor, device)
+            for prediction, target, file_name in results:
+                if data_type != "sroie":
+                    target = parse_ingredients(target)
+                    prediction = parse_ingredients(prediction)
+                rows.append({"prediction": prediction, "target": target, "file_name": file_name})
+    else:
+        print("Running single-sample prediction...")
+        for i in range(len(dataset)):
+            print("Processing sample", i + 1, "of", len(dataset))
+            test_sample = dataset[i]
 
-        rows.append({
-            "prediction": prediction,
-            "target": target,
-            "file_name": file_name
-        })
+            if data_type == "final_test":                          
+                image_path = test_sample["image_path"]
+                file_name = image_path
+                filename = image_path.replace("\\", "/").split("/")[-1]
+                cluster_path = "/shared/workspace/laspp/jakob_petek/data_ocr/nutris/img/" + filename
+
+                print(f"Running prediction for image: {cluster_path}")                
+
+                prediction = run_prediction_from_image(
+                    cluster_path, model, processor, device
+                )
+
+                target = test_sample["ground_truth"]
+            else:
+                # Run prediction
+                prediction, target, file_name = run_prediction(test_sample, model, processor, device)
+
+            if i % 50 == 0:
+                print("Sample prediction " + str(i) + ":", prediction)
+                print("Sample target " + str(i) + ":", target)
+
+            if data_type != "sroie":
+                target = parse_ingredients(target)
+                prediction = parse_ingredients(prediction)
+
+            rows.append({
+                "prediction": prediction,
+                "target": target,
+                "file_name": file_name
+            })
 
     df = pd.DataFrame(rows)
     name = data_type + "_eval_results.csv"

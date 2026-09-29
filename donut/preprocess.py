@@ -340,10 +340,20 @@ def preprocess(dataset_type, debug=False):
     print(f"[INFO] Dataset has {len(dataset)} images")
     print(f"[INFO] Dataset features are: {dataset.features.keys()}")
 
+    w = 720
+    h = 960
+
+    USE_ORIGINAL_SIZE = True  # Set to True to use original image size, False to resize to 720x960
+    if USE_ORIGINAL_SIZE:
+        print("[INFO] Using original image size for Donut preprocessing.", flush=True)
+        w = 1200
+        h = 1600    
+        original_name += "-original-size"
+
     if debug:
         random_sample = random.randint(0, len(dataset)) - 1
         print(f"[DEBUG] OCR text is {dataset[random_sample]['text']}")
-        dataset[random_sample]['image'].resize((720, 960)).show()
+        dataset[random_sample]['image'].resize((w, h)).show()
         quit(0)
 
     # Tokenize dataset
@@ -379,12 +389,13 @@ def preprocess(dataset_type, debug=False):
     processor.tokenizer.add_special_tokens(
         {"additional_special_tokens": new_special_tokens + [task_start_token] + [eos_token]})
     # Resize image embeddings
-    processor.feature_extractor.size = [720, 960]  # should be (width, height)
+    processor.feature_extractor.size = [w, h]  # should be (width, height)
     processor.feature_extractor.do_align_long_axis = True  # False if dataset_type == "sroie" else True
 
     processed_dataset = proc_dataset.map(
         lambda sample: transform_and_tokenize(sample, processor=processor, split="train"),
-        remove_columns=["image", "text"]
+        remove_columns=["image", "text"],
+        writer_batch_size=20,
     )
 
     # Save processed dataset and processor
@@ -396,7 +407,7 @@ def preprocess(dataset_type, debug=False):
 
 if __name__ == "__main__":
     # "sroie" or "nutris"
-    # "nutris" has optionals "-slim-X" / "-flat", where X is number of samples for slim version, default is 5000    
-    data = "nutris"
+    # "nutris" has optionals "-slim-X" / "-flat", where X is number of samples for slim version, default is 5000        
+    data = "nutris-flat"
 
     preprocess(data)

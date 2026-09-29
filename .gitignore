@@ -203,3 +203,11 @@ sroie-model/
 outputs/
 nutris*/
 *.csv
+
+*.sqfs
+
+qwen_model*/
+qwen_new_model*/
+qwen_results_base/*
+
+*.jsonl

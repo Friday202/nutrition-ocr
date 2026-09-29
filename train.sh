@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name=train-nutris
 #SBATCH --partition=frida
-#SBATCH --time=2:00:00
-#SBATCH --gres=gpu:A100
+#SBATCH --time=24:00:00
+#SBATCH --gres=gpu:A100:1
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=128G
 
